@@ -35,9 +35,12 @@ def resolve_uri(request, registry_label, requested_uri):
         return HttpResponseServerError('More than one representation is defined for the acceptable MIME type: %s' % content_type)
     else:
         url_template = url_templates[0]
-        
+
     # Convert the URL template to a resolvable URL
     url = rule.resolve_url_template(requested_uri, url_template)
     
-    # Perform the redirection
-    return HttpResponseSeeOther(url)
+    # Perform the redirection if the resolver returns something, or a 404 instead
+    if url:
+        return HttpResponseSeeOther(url)
+    else:
+        return HttpResponseNotFound('The requested URI did not return any document')

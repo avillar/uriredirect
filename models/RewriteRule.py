@@ -1,6 +1,8 @@
 from django.db import models
 from AcceptMapping import AcceptMapping
 import mimeparse, re
+from django.db.models.loading import get_model
+
 
 class RewriteRule(models.Model):
     class Meta:
@@ -53,4 +55,20 @@ class RewriteRule(models.Model):
         if match.lastindex != None:
             for i in range(match.lastindex):
                 url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
+        # Django model pattern matching
+        model_match = re.match(u'.*@(\w+:\w+\.\w+)@.*', url_template)
+        if(model_match):
+            try:
+                django_pattern = model_match.group(1)
+                lookup_field = django_pattern.split(':')[0]  # field name of the filter we'll use to select the django object
+                lookup_model = django_pattern.split(':')[1]  # app_label.model_name
+                app_label = lookup_model.split('.')[0]
+                model_label = lookup_model.split('.')[1]
+                model = get_model(app_label, model_label)
+                obj = model.objects.get(**{lookup_field: match.groupdict()[lookup_field]})
+                url_template = re.sub(u'@' + django_pattern + u'@', obj.slug, url_template)
+            except model.DoesNotExist:
+                return None
         return url_template
+
+

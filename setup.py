@@ -30,7 +30,7 @@ setup(
     author = 'Ryan Clark',
     zip_safe = False,
     install_requires = ['mimeparse', ],
-    long_description = open('README.md').read(),
+    long_description = open('readme.md').read(),
     url = 'https://github.com/usgin/uriredirect',
     download_url = 'https://github.com/usgin/uriredirect/tarball/master',
     classifiers = [

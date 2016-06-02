@@ -1,0 +1,19 @@
+[{
+		"pk" : 2,
+		"model" : "uriredirect.acceptmapping",
+		"fields" : {
+			"media_type" : [ "text/html"],
+			"rewrite_rule" : 2,
+			"redirect_to" : "http://domain.com/whereAPItellsMe"
+		}
+	},
+	{
+		"pk" : 2,
+		"model" : "uriredirect.acceptmapping",
+		"fields" : {
+			"media_type" : [ "image/gif" ],
+			"rewrite_rule" : 3,
+			"redirect_to" : "http://domain.com/whereBindingTellsMe"
+		}
+	}
+]

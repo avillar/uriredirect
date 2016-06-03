@@ -90,7 +90,7 @@ class RewriteRule(models.Model):
     )
       
     def __unicode__(self):
-        return ":".join(filter(None, (self.pattern, self.service_location )))
+        return self.label
     
     def extension_match(self, requested_extension):        
         accept_mappings = AcceptMapping.objects.filter(

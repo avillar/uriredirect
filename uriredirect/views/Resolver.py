@@ -6,8 +6,13 @@ import re
 def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if request.META['REQUEST_METHOD'] != 'GET':
         return HttpResponseNotAllowed(['GET'])
-    requested_extension = requested_extension.replace('.','')
-    #import pdb; pdb.set_trace()
+    if requested_extension :
+        requested_extension = requested_extension.replace('.','')
+    
+    try:
+        if request.GET['__pdb__'] :
+            import pdb; pdb.set_trace()
+    except: pass
     # Determine if this server is aware of the requested registry
     try:
         requested_register = UriRegister.objects.get(label=registry_label)
@@ -28,7 +33,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
 
     rule = None # havent found anything yet until we check params
 
-    accept = request.META.get('HTTP_ACCEPT', '*')
+    clientaccept = request.META.get('HTTP_ACCEPT', '*')
     # note will ignore accept header and allow override format/lang in conneg if LDA convention in use
        
     for rulechain in rulechains :
@@ -36,10 +41,13 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         for patrule in rulechain :
             (use_lda, ignore) = patrule.get_prop_from_tree('use_lda')
             if use_lda :
-                accept = None # force sricter matching
                 try:
                     requested_extension= request.GET['_format']
                 except : pass
+                if requested_extension :
+                    accept = None
+                else :
+                    accept = clientaccept # allow content negotiation only if not specified
             else :
                 accept = clientaccept
             (queryparams, prule) = patrule.get_prop_from_tree('view_pattern')
@@ -75,7 +83,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     print url_template 
     
     # set up all default variables
-    vars = { 'server' : binding.service_location , 'path' : requested_uri, 'register' : registry_label }
+    vars = { 'server' : binding.service_location , 'path' : requested_uri, 'term' : requested_uri[requested_uri.rindex("/")+1:] , 'path_base' : requested_uri[: requested_uri.rindex("/")], 'register_name' : registry_label, 'register' : requested_register.url  }
     
     
     # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 

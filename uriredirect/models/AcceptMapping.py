@@ -13,7 +13,7 @@ class AcceptMapping(models.Model):
     )
     redirect_to = models.CharField(
         max_length=2000,
-        help_text='The URL or URL template to which the specified Representation Type should redirect.'
+        help_text='The URL or URL template to which the specified Representation Type should redirect. Templates may use positional variables ($1,$2) from the rule pattern, additional parameters ${param} or ${param=default} if a default value is to be used, or query params $q{queryparam} or HTTP header values $h{header}'
     )
     
     def __unicode__(self):

@@ -1,0 +1,24 @@
+[
+    {
+        "pk": 2,
+        "model": "uriredirect.rewriterule",
+        "fields": {
+            "pattern": "(.+)/\\d+$",
+            "description": "For testing",
+            "label": "API"
+        }
+    }
+	,
+	 {
+        "pk": 3,
+        "model": "uriredirect.rewriterule",
+        "fields": {
+			"parent" : 2
+            "pattern": "(.+)/\\d+$",
+            "description": "For testing",
+            "register": 1,
+			"service_location" : "http://example.com/service",
+            "label": "Binding"
+        }
+    }
+]

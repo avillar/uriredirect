@@ -7,7 +7,7 @@ class ResolverTestCase(TestCase):
     
     def setUp(self):
         self.c = Client()
-        self.basePath = '/' # this needs to be configured depending on how you've set up URL structure in your Django project
+        self.basePath = '/def' # this needs to be configured depending on how you've set up URL structure in your Django project
     
     def test_resolve_uri_invalid_HTTP_method(self):
         result = self.c.post(self.basePath + "something/sent/to/resolver")

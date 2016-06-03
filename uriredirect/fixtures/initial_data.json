@@ -1,0 +1,100 @@
+[{
+		"pk" : 1,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "html",
+			"mime_type" : "text/html"
+		}
+	}, {
+		"pk" : 2,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "json",
+			"mime_type" : "application/json"
+		}
+	}, {
+		"pk" : 3,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : ".txt",
+			"mime_type" : "text/plain"
+		}
+	}, {
+		"pk" : 4,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "css",
+			"mime_type" : "text/css"
+		}
+	}, {
+		"pk" : 5,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "png",
+			"mime_type" : "image/png"
+		}
+	}, {
+		"pk" : 6,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "jpg",
+			"mime_type" : "image/jpeg"
+		}
+	}, {
+		"pk" : 7,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "rdf",
+			"mime_type" : "application/rdf+xml"
+		}
+	}, {
+		"pk" : 8,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "xml",
+			"mime_type" : "application/xml"
+		}
+	}, {
+		"pk" : 9,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "kml",
+			"mime_type" : "application/vnd.google-earth.kml+xml"
+		}
+	}, {
+		"pk" : 10,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "ttl",
+			"mime_type" : "text/turtle"
+		}
+	}, {
+		"pk" : 11,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "gml",
+			"mime_type" : "application/gml+xml"
+		}
+	}, {
+		"pk" : 12,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "gif",
+			"mime_type" : "image/gif"
+		}
+	}, {
+		"pk" : 13,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "pdf",
+			"mime_type" : "application/pdf"
+		}
+	}, {
+		"pk" : 14,
+		"model" : "uriredirect.mediatype",
+		"fields" : {
+			"file_extension" : "js",
+			"mime_type" : "application/javascript"
+		}
+	}
+]

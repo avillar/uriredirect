@@ -197,7 +197,7 @@ class RewriteRule(models.Model):
         for var in varmatch :
             if not qvars.get(var) :
                 raise ValueError("variable %s not found" % var) 
-            url_template = re.sub('\${' + var + '}', qvars[var], url_template)  
+            url_template = re.sub('\$q{' + var + '}', qvars[var], url_template)  
             
         # Django model pattern matching
         model_match = re.match(u'.*@(\w+:\w+\.\w+:\w+)@.*', url_template)

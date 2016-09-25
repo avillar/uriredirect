@@ -10,7 +10,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         requested_extension = requested_extension.replace('.','')
     
     try:
-        if request.GET['__pdb__'] :
+        if request.GET['pdb'] :
             import pdb; pdb.set_trace()
     except: pass
     # Determine if this server is aware of the requested registry

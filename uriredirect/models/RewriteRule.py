@@ -120,9 +120,17 @@ class RewriteRule(models.Model):
             returns a T/F, and the actual rule from the inheritance tree that matched a pattern
             - the key use case is that an API can be set up against a pattern, and then inherited by a binding to a register (URI base) and service endpoint
         """
-        if self.pattern :
-            if re.match(self.pattern, requested_uri) != None :
+        if not requested_uri and not self.pattern :
+            if not self.parent :
                 return (True, self)
+            # else fall through - need to check if parent has a pattern - in which case we dont match!
+        if self.pattern:
+            if requested_uri :
+                if re.match(self.pattern, requested_uri) != None :
+                    return (True, self)
+            else :
+                # empty subregister pattern cannot match a pattern
+                return (False, None)
         if self.parent :
             return self.parent.match_inheritance ( requested_uri ) 
         return (False, None)
@@ -180,11 +188,12 @@ class RewriteRule(models.Model):
                 
     def resolve_url_template(self, requested_uri, url_template, vars, qvars):
         # get substitution groups from original pattern
-        match = re.match(self.get_pattern(), requested_uri)
-        if match.lastindex != None:
-            for i in range(match.lastindex):
-                url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
-                
+        if requested_uri :
+            match = re.match(self.get_pattern(), requested_uri)
+            if match.lastindex != None:
+                for i in range(match.lastindex):
+                    url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
+                    
         # environment variable matching
         varmatch = re.findall(u'\${(\w+)}', url_template)
         for var in varmatch :

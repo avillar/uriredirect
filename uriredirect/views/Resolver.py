@@ -3,6 +3,12 @@ from uriredirect.models import UriRegister
 from uriredirect.http import HttpResponseNotAcceptable, HttpResponseSeeOther
 import re
 
+def resolve_register_uri(request, registry_label,requested_extension):
+    """
+        resolve a request to the register itself - just another URI
+    """
+    return resolve_uri(request, registry_label, None, requested_extension )
+    
 def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if request.META['REQUEST_METHOD'] != 'GET':
         return HttpResponseNotAllowed(['GET'])
@@ -83,7 +89,10 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     print url_template 
     
     # set up all default variables
-    vars = { 'server' : binding.service_location , 'path' : requested_uri, 'term' : requested_uri[requested_uri.rindex("/")+1:] , 'path_base' : requested_uri[: requested_uri.rindex("/")], 'register_name' : registry_label, 'register' : requested_register.url  }
+    if  requested_uri :
+        vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : requested_uri[requested_uri.rindex("/")+1:] , 'path_base' : requested_uri[: requested_uri.rindex("/")], 'register_name' : registry_label, 'register' : requested_register.url  }
+    else:
+        vars = { 'uri' : requested_register.url , 'server' : binding.service_location , 'path' : requested_uri, 'term' : '' , 'path_base' : '' , 'register_name' : registry_label, 'register' : requested_register.url  }
     
     
     # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 

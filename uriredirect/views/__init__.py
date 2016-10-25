@@ -1,1 +1,1 @@
-from Resolver import resolve_uri
+from Resolver import resolve_uri, resolve_register_uri

@@ -90,7 +90,11 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     # set up all default variables
     if  requested_uri :
-        vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : requested_uri[requested_uri.rindex("/")+1:] , 'path_base' : requested_uri[: requested_uri.rindex("/")], 'register_name' : registry_label, 'register' : requested_register.url  }
+        try:
+            term = requested_uri[requested_uri.rindex("/")+1:]
+            vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")], 'register_name' : registry_label, 'register' : requested_register.url  }
+        except:
+            vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : '' , 'path_base' : requested_uri, 'register_name' : registry_label, 'register' : requested_register.url  }
     else:
         vars = { 'uri' : requested_register.url , 'server' : binding.service_location , 'path' : requested_uri, 'term' : '' , 'path_base' : '' , 'register_name' : registry_label, 'register' : requested_register.url  }
     

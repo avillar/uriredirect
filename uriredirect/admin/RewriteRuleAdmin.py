@@ -2,6 +2,9 @@ from django.contrib import admin
 from AcceptMappingInline import AcceptMappingInline
 from django import forms
 
+class UriRegisterAdmin(admin.ModelAdmin):
+    list_display = ('label', 'url')
+
 class RewriteRuleAdminForm(forms.ModelForm):
     pattern = forms.CharField(widget=forms.TextInput(attrs={'size':200}))
     service_location = forms.CharField(widget=forms.TextInput(attrs={'size':200}))

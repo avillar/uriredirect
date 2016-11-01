@@ -85,7 +85,6 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if not rule :
         return HttpResponseNotFound('The requested URI base matched but no match for specific query parameters and/or format')
  
-    
     print url_template 
     
     # set up all default variables
@@ -94,7 +93,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             term = requested_uri[requested_uri.rindex("/")+1:]
             vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")], 'register_name' : registry_label, 'register' : requested_register.url  }
         except:
-            vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : '' , 'path_base' : requested_uri, 'register_name' : registry_label, 'register' : requested_register.url  }
+            vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : requested_uri , 'path_base' : requested_uri, 'register_name' : registry_label, 'register' : requested_register.url  }
     else:
         vars = { 'uri' : requested_register.url , 'server' : binding.service_location , 'path' : requested_uri, 'term' : '' , 'path_base' : '' , 'register_name' : registry_label, 'register' : requested_register.url  }
     

@@ -20,6 +20,7 @@ uriredirect/models/MediaType.py
 uriredirect/models/RewriteRule.py
 uriredirect/models/UriRegister.py
 uriredirect/models/__init__.py
+uriredirect/tests/InheritanceTestCase.py
 uriredirect/tests/ResolverTestCase.py
 uriredirect/tests/RewriteRuleTestCase.py
 uriredirect/tests/UriRegisterTestCase.py

@@ -1,11 +1,19 @@
 # URI Redirection Engine
 
 ## What does it do?
+- Uses rules to bind URIs with parameters to service endpoints using templated URL patterns.
 - Allows you to put together a list of rewrite rules, very similar to Apache's mod_rewrite, except the rules are persisted in a database, and Django provides a great administration interface.
+- Allows rules to inherit and override or extend parent rules, creating a flexible capability to desribe and bind to complex APIs with many optional parameters.
+- Supports re-usable "API rules", so standard APIs and Linked Data best practices can be implemented simply by binding a URI base (namespace) to the APIs deployed to service it.
+- allows specific rules to override default bindings for URL parameters (e.g. Linked Data _\_view_ parameter to choose specific content profile to return (in addition to MIME type encoding choice via HTTP Content-Type headers)
+
+## Rules
 - Your rewrite rules specify a regular expression pattern. Incoming URI requests are matched against these patterns, and the matching rule determines the destination of the request.
 - You write out the URLs that URIs should redirect to much as you would in Apache's mod_rewrite, using $1, $2 notation to indicate capture groups in the regular expression that should be used as part of the redirect location.
 - For each rewrite rule, you can specify multiple representations. The server performs HTTP Content Negotiation on incoming URI requests and uses your content-mappings to send a request with a specific Accept header to the appropriate redirect location.
 - Groups rewrite rules into URI Registers. Your server can "serve" any number of URI registers, and might know about other, remote registries. If your server recieves a URI request for a URI register that it knows about, but does not serve itself, that request is forwarded to the remote server.
+- rules may inherit from one or more parents, in which case they supply additional rules or overwrite defaults in inherited rules
+- leaving the URI register and matching pattern blank creates an abstract "API binding" that can be re-used for many registers
 
 ## What gets persisted:
 ### URI Registries
@@ -19,11 +27,15 @@ At `http://your server name}/admin/uriredirect/uriregister/add/` give your regis
 
 ### Rewrite Rules
 *models/RewriteRule.py*
-- register: Foreign key to the register to which this rewrite rule belongs
+- register: Foreign key to the register to which this rewrite rule belongs (if absent then a re-usable API description)
 - label: A simple label for this rewrite rule. Helps you find it in Django's admin interface.
 - description: An optional description of the rewrite rule.
-- pattern: the regular expression pattern for an incoming URI request that this rule should match.
-- representations: A many-to-many relationship with media types. Each representation of your resource has a specific mime type and is accessed at a specific URL.
+- parent: Optional rule to inherit from (either an API binding, or a ruleset extending an API specification)
+- pattern: the regular expression pattern for an incoming URI request that this rule should match. 
+- Use LDA standard params: a flag to automatically bind overrides for HTTP content headers from URL params "\_format" and "\_lang"
+- View param: optional name of a parameter that defines a specific view, to which these specific rules will apply
+- view pattern: regex pattern to recognise the view name in the designated view parameter
+- Accept-mapping: A many-to-many relationship with media types. Each representation of your resource has a specific mime type and is accessed at a specific URL.
 
 When generating a rewrite rule, there are two things to keep in mind:
 - a URI coming into the system will be in this general structure: `/{register label}/{part of the URI that is matched to the rule's pattern}`. That is, don't include the register label part of the URI in a rule's pattern.

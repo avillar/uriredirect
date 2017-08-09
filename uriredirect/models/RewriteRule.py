@@ -1,7 +1,10 @@
 from django.db import models
 from AcceptMapping import AcceptMapping
 import mimeparse, re
-from django.db.models.loading import get_model
+try:
+    from django.apps  import apps
+except:
+    from django.db.models.loading import get_model
 
 class RewriteRuleManager(models.Manager):
     def get_by_natural_key(self, label):
@@ -218,7 +221,10 @@ class RewriteRule(models.Model):
                 redirect_field = django_pattern.split(':')[2]  # the field displayed in the new redirect URL
                 app_label = lookup_model.split('.')[0]
                 model_label = lookup_model.split('.')[1]
-                model = get_model(app_label, model_label)
+                try:
+                   model = apps.get_model(app_label, model_label)
+		except:
+		   model = get_model(app_label, model_label)
                 obj = model.objects.get(**{lookup_field: match.groupdict()[lookup_field]})
                 url_template = re.sub(u'@' + django_pattern + u'@', getattr(obj, redirect_field), url_template)
             except model.DoesNotExist:

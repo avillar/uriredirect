@@ -9,6 +9,12 @@ def resolve_register_uri(request, registry_label,requested_extension):
     """
     return resolve_uri(request, registry_label, None, requested_extension )
     
+def resolve_registerslash_uri(request, registry_label,requested_extension):
+    """
+        resolve a request to the register itself - with a trailing slash
+    """
+    return resolve_uri(request, registry_label, "/", requested_extension )
+    
 def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if request.META['REQUEST_METHOD'] != 'GET':
         return HttpResponseNotAllowed(['GET'])
@@ -23,7 +29,14 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     try:
         requested_register = UriRegister.objects.get(label=registry_label)
     except UriRegister.DoesNotExist:
-        return HttpResponseNotFound('The requested URI registry does not exist')
+        try:
+            requested_register = UriRegister.objects.get(label='*')
+            if requested_uri == "/" :
+                requested_uri = "".join( filter(None,(registry_label,requested_uri)))
+            else:
+                requested_uri = "/".join( filter(None,(registry_label,requested_uri)))
+        except UriRegister.DoesNotExist:   
+            return HttpResponseNotFound('The requested URI registry does not exist')
     
     # Determine if this server can resolve a URI for the requested registry
     if not requested_register.can_be_resolved:

@@ -134,7 +134,7 @@ class RewriteRule(models.Model):
             else :
                 # empty subregister pattern cannot match a pattern
                 return (False, None)
-        if self.parent :
+        elif self.parent :
             return self.parent.match_inheritance ( requested_uri ) 
         return (False, None)
     
@@ -193,7 +193,7 @@ class RewriteRule(models.Model):
         # get substitution groups from original pattern
         if requested_uri :
             match = re.match(self.get_pattern(), requested_uri)
-            if match.lastindex != None:
+            if match and match.lastindex != None:
                 for i in range(match.lastindex):
                     url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
                     

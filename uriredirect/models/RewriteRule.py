@@ -1,6 +1,7 @@
 from django.db import models
 from AcceptMapping import AcceptMapping
 import mimeparse, re
+from urllib import quote_plus
 try:
     from django.apps  import apps
 except:
@@ -198,18 +199,24 @@ class RewriteRule(models.Model):
                     url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
                     
         # environment variable matching
-        varmatch = re.findall(u'\${(\w+)}', url_template)
-        for var in varmatch :
-            if not vars.get(var) :
+        varmatch = re.findall(u'\${(!?)(\w+)}', url_template)
+        for raw,var in varmatch :
+            varval = vars.get(var) 
+            if not varval :
                 raise ValueError("variable %s not found" % var )
-            url_template = re.sub('\${' + var + '}', vars[var], url_template)
+            if raw == '!' :
+                varval = quote_plus(varval)
+            url_template = re.sub('\${' + raw+ var + '}', vars[var], url_template)
             
         # query variable matching
-        varmatch = re.findall(u'\$q{(\w+)}', url_template)
-        for var in varmatch :
-            if not qvars.get(var) :
-                raise ValueError("variable %s not found" % var) 
-            url_template = re.sub('\$q{' + var + '}', qvars[var], url_template)  
+        varmatch = re.findall(u'\$q{(!?)(\w+)}', url_template)
+        for raw,var in varmatch :
+            varval = qvars.get(var) 
+            if not varval :
+                raise ValueError("variable %s not found" % var )
+            if raw == '!' :
+                varval = quote_plus(varval)
+            url_template = re.sub('\$q{' + raw+ var + '}', varval, url_template)  
             
         # Django model pattern matching
         model_match = re.match(u'.*@(\w+:\w+\.\w+:\w+)@.*', url_template)
@@ -223,8 +230,8 @@ class RewriteRule(models.Model):
                 model_label = lookup_model.split('.')[1]
                 try:
                    model = apps.get_model(app_label, model_label)
-		except:
-		   model = get_model(app_label, model_label)
+                except:
+                   model = get_model(app_label, model_label)
                 obj = model.objects.get(**{lookup_field: match.groupdict()[lookup_field]})
                 url_template = re.sub(u'@' + django_pattern + u'@', getattr(obj, redirect_field), url_template)
             except model.DoesNotExist:

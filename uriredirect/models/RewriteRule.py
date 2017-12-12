@@ -196,7 +196,10 @@ class RewriteRule(models.Model):
             match = re.match(self.get_pattern(), requested_uri)
             if match and match.lastindex != None:
                 for i in range(match.lastindex):
-                    url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
+                    if match.group(i + 1) :
+                        url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
+                    else:
+                        url_template = re.sub('\$' + str(i + 1), '', url_template)
                     
         # environment variable matching
         varmatch = re.findall(u'\${(!?)(\w+)}', url_template)

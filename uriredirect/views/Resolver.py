@@ -26,27 +26,36 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             import pdb; pdb.set_trace()
     except: pass
     # Determine if this server is aware of the requested registry
+    requested_register=None
+    default_register=None
     try:
         requested_register = UriRegister.objects.get(label=registry_label)
     except UriRegister.DoesNotExist:
-        try:
-            requested_register = UriRegister.objects.get(label='*')
-            if requested_uri == "/" :
-                requested_uri = "".join( filter(None,(registry_label,requested_uri)))
-            else:
-                requested_uri = "/".join( filter(None,(registry_label,requested_uri)))
-        except UriRegister.DoesNotExist:   
+        if requested_uri == "/" :
+            requested_uri = "".join( filter(None,(registry_label,requested_uri)))
+        else:
+            requested_uri = "/".join( filter(None,(registry_label,requested_uri)))
+        
+    try:
+        default_register = UriRegister.objects.get(label='*')
+ 
+    except UriRegister.DoesNotExist:   
+        if not requested_register:
             return HttpResponseNotFound('The requested URI registry does not exist')
     
     # Determine if this server can resolve a URI for the requested registry
-    if not requested_register.can_be_resolved:
+    if requested_register and not requested_register.can_be_resolved:
         return HttpResponsePermanentRedirect(requested_register.construct_remote_uri(requested_uri))
     
     # Find rewrite rules matching the requested uri Base - including the rule that binds the rules to a service - so bundled into 
     # rulechains - where first rule is the one bound to the register and service location.
-    rulechains = requested_register.find_matching_rules(requested_uri)
-    if len(rulechains) == 0:
-        return HttpResponseNotFound('The requested URI base does not match base URI pattern for any rewrite rules')
+    if requested_register:
+        rulechains = requested_register.find_matching_rules(requested_uri)
+    if not requested_register or len(rulechains) == 0:
+        rulechains = default_register.find_matching_rules(requested_uri)
+        requested_register= default_register
+        if len(rulechains) == 0:
+            return HttpResponseNotFound('The requested URI base does not match base URI pattern for any rewrite rules')
  
     # find subset matching viewname, and other query param constraints
 

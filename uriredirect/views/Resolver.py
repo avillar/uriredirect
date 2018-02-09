@@ -31,8 +31,8 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     try:
         requested_register = UriRegister.objects.get(label=registry_label)
     except UriRegister.DoesNotExist:
-        if requested_uri == "/" :
-            requested_uri = "".join( filter(None,(registry_label,requested_uri)))
+        if requested_uri in [ "/", None ] :
+            requested_uri = "".join( filter(None,(registry_label,requested_uri if requested_uri else '')))
         else:
             requested_uri = "/".join( filter(None,(registry_label,requested_uri)))
         

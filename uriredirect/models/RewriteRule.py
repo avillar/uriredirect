@@ -129,9 +129,8 @@ class RewriteRule(models.Model):
                 return (True, self)
             # else fall through - need to check if parent has a pattern - in which case we dont match!
         if self.pattern:
-            if requested_uri :
-                if re.match(self.pattern, requested_uri) != None :
-                    return (True, self)
+            if re.match(self.pattern, requested_uri) != None :
+                return (True, self)
             else :
                 # empty subregister pattern cannot match a pattern
                 return (False, None)

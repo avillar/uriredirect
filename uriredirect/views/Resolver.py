@@ -52,7 +52,9 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if requested_register:
         rulechains = requested_register.find_matching_rules(requested_uri)
     if not requested_register or len(rulechains) == 0:
-        rulechains = default_register.find_matching_rules(requested_uri)
+        if registry_label:
+            requested_uri = "/".join( (registry_label, requested_uri))
+        rulechains = default_register.find_matching_rules(requested_uri) 
         requested_register= default_register
         if len(rulechains) == 0:
             return HttpResponseNotFound('The requested URI base does not match base URI pattern for any rewrite rules')

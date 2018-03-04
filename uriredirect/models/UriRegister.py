@@ -23,8 +23,8 @@ class UriRegister(models.Model):
         help_text='A label that uniquely identifies a particular URI register'                                  
     )
     
-    url = models.URLField(
-        help_text='The absolute URL of a server at which this URI register can be reached'                      
+    url = models.URLField( blank=True, null=True,
+        help_text='The absolute URL of a server at which this URI register can be reached. May be left blank, in which case the incoming request will be used.'                      
     )
     
     can_be_resolved = models.BooleanField(

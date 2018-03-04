@@ -204,7 +204,7 @@ class RewriteRule(models.Model):
         varmatch = re.findall(u'\${(!?)(\w+)}', url_template)
         for raw,var in varmatch :
             varval = vars.get(var) 
-            if not varval :
+            if not type(varval).__name__ in ("str" , "unicode") :
                 raise ValueError("variable %s not found" % var )
             if raw == '!' :
                 varval = quote_plus(varval)
@@ -214,7 +214,7 @@ class RewriteRule(models.Model):
         varmatch = re.findall(u'\$q{(!?)(\w+)}', url_template)
         for raw,var in varmatch :
             varval = qvars.get(var) 
-            if not varval :
+            if not type(varval).__name__ in ("str" , "unicode") :
                 raise ValueError("variable %s not found" % var )
             if raw == '!' :
                 varval = quote_plus(varval)

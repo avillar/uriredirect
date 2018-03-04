@@ -1,7 +1,8 @@
-from django.http import HttpResponseNotFound, HttpResponseServerError, HttpResponsePermanentRedirect, HttpResponseNotAllowed
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseServerError, HttpResponsePermanentRedirect, HttpResponseNotAllowed
 from uriredirect.models import UriRegister
 from uriredirect.http import HttpResponseNotAcceptable, HttpResponseSeeOther
 import re
+
 
 def resolve_register_uri(request, registry_label,requested_extension):
     """
@@ -20,10 +21,14 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         return HttpResponseNotAllowed(['GET'])
     if requested_extension :
         requested_extension = requested_extension.replace('.','')
-    
+    debug = False 
     try:
         if request.GET['pdb'] :
             import pdb; pdb.set_trace()
+    except: pass
+    try:
+        if request.GET['debug'] :
+            debug=True
     except: pass
     # Determine if this server is aware of the requested registry
     requested_register=None
@@ -52,7 +57,8 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if requested_register:
         rulechains = requested_register.find_matching_rules(requested_uri)
     if not requested_register or len(rulechains) == 0:
-        if registry_label:
+        if requested_register and registry_label:
+            # register but no rules, so havent joined yest 
             requested_uri = "/".join( (registry_label, requested_uri))
         rulechains = default_register.find_matching_rules(requested_uri) 
         requested_register= default_register
@@ -109,24 +115,36 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if not rule :
         return HttpResponseNotFound('The requested URI base matched but no match for specific query parameters and/or format')
  
-    print url_template 
+    # print url_template 
+    if requested_register.url:
+        register_uri_base = requested_register.url
+    else:
+        host_base = "://".join((request.scheme,request.get_host()))   
+        register_uri_base = "".join((host_base,request.path[:request.path.index(registry_label)-1]))
+    
+    vars = { 
+        'uri_base' : "://".join((request.scheme,request.get_host())) ,
+        'server' : binding.service_location , 'path' : requested_uri,  'register_name' : registry_label, 'register' : requested_register.url  }
+    
     
     # set up all default variables
     if  requested_uri :
         try:
             term = requested_uri[requested_uri.rindex("/")+1:]
-            vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")], 'register_name' : registry_label, 'register' : requested_register.url  }
+            vars.update({ 'uri' : "/".join((register_uri_base ,requested_uri)),   'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")] })
         except:
-            vars = { 'uri' : "/".join((requested_register.url,requested_uri)) , 'server' : binding.service_location , 'path' : requested_uri, 'term' : requested_uri , 'path_base' : requested_uri, 'register_name' : registry_label, 'register' : requested_register.url  }
+            vars.update({ 'uri' : "/".join((register_uri_base ,requested_uri)) ,   'term' : requested_uri , 'path_base' : requested_uri })
     else:
-        vars = { 'uri' : requested_register.url , 'server' : binding.service_location , 'path' : requested_uri, 'term' : '' , 'path_base' : '' , 'register_name' : registry_label, 'register' : requested_register.url  }
+        vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
     
     
     # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
     url = rule.resolve_url_template(requested_uri, url_template, vars, request.GET  )
     
     # Perform the redirection if the resolver returns something, or a 404 instead
-    if url:
+    if debug:
+        return HttpResponse("Debug mode: rulematched (%s) generated %s " % ( rule, url ),content_type="text/plain")
+    elif url:
         return HttpResponseSeeOther(url)
     else:
         return HttpResponseNotFound('The requested URI did not return any document')

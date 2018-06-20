@@ -59,7 +59,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if not requested_register or len(rulechains) == 0:
         if requested_register and registry_label:
             # register but no rules, so havent joined yest 
-            requested_uri = "/".join( (registry_label, requested_uri))
+            requested_uri = "/".join( (registry_label, "" if requested_uri == '/' else requested_uri )) if requested_uri else registry_label
         rulechains = default_register.find_matching_rules(requested_uri) 
         requested_register= default_register
         if len(rulechains) == 0:

@@ -124,16 +124,16 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
-        'server' : binding.service_location , 'path' : requested_uri,  'register_name' : registry_label, 'register' : requested_register.url  }
+        'server' : binding.service_location .replace("http",request.scheme,1) , 'path' : requested_uri,  'register_name' : registry_label, 'register' : requested_register.url  }
     
     
     # set up all default variables
     if  requested_uri :
         try:
             term = requested_uri[requested_uri.rindex("/")+1:]
-            vars.update({ 'uri' : "/".join((register_uri_base ,requested_uri)),   'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")] })
+            vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)),   'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")] })
         except:
-            vars.update({ 'uri' : "/".join((register_uri_base ,requested_uri)) ,   'term' : requested_uri , 'path_base' : requested_uri })
+            vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)) ,   'term' : requested_uri , 'path_base' : requested_uri })
     else:
         vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
     

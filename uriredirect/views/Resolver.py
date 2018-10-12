@@ -2,7 +2,7 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseServerEr
 from uriredirect.models import UriRegister
 from uriredirect.http import HttpResponseNotAcceptable, HttpResponseSeeOther
 import re
-
+import json
 
 def resolve_register_uri(request, registry_label,requested_extension):
     """
@@ -124,7 +124,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
-        'server' : binding.service_location .replace("http",request.scheme,1) , 'path' : requested_uri,  'register_name' : registry_label, 'register' : requested_register.url  }
+        'server' : binding.service_location.replace("http",request.scheme,1)  , 'path' : requested_uri,  'register_name' : registry_label, 'register' : requested_register.url.replace("http",request.scheme,1)  }
     
     
     # set up all default variables
@@ -143,7 +143,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     # Perform the redirection if the resolver returns something, or a 404 instead
     if debug:
-        return HttpResponse("Debug mode: rulematched (%s) generated %s " % ( rule, url ),content_type="text/plain")
+        return HttpResponse("Debug mode: rulematched (%s) generated %s \n\n template variables available: \n %s " % ( rule, url, json.dumps(vars, indent = 4) ),content_type="text/plain")
     elif url:
         return HttpResponseSeeOther(url)
     else:

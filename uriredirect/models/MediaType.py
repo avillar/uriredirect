@@ -14,7 +14,7 @@ class MediaType(models.Model):
     objects = MediaTypeManager()
     
     def natural_key(self):
-        return(self.mime_type)
+        return(self.mime_type,)
         
     mime_type = models.CharField(
         max_length=100,

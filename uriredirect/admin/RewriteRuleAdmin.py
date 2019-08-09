@@ -58,6 +58,21 @@ class RegisterFilter(admin.SimpleListFilter):
             pass
         return qs 
 
+class ProfileFilter(admin.SimpleListFilter):
+    title='Data Profile'
+    parameter_name = 'profile'
+    
+    def lookups(self, request, model_admin):
+        profiles = Profile.objects.all()        
+        return set([(c.id, c.token) for c in profiles])
+        
+    def queryset(self, request, qs):
+        try:
+            qs= qs.filter(profile__id=request.GET['profile'])
+        except:
+            pass
+        return qs 
+        
 class ServerFilter(admin.SimpleListFilter):
     title='Service'
     parameter_name = 'server_uri'
@@ -91,7 +106,7 @@ class RegisterRuleFilter(admin.SimpleListFilter):
 class RewriteRuleAdmin(admin.ModelAdmin):
     save_as = True
     list_display = ('label', 'pattern', 'register')
-    list_filter = (RegisterFilter, ServerFilter, RegisterRuleFilter, APIUsedFilter, APIPartFilter)
+    list_filter = (ProfileFilter,RegisterFilter, ServerFilter, RegisterRuleFilter, APIUsedFilter, APIPartFilter)
     search_fields = ('label', 'pattern','parent')
     # disabled because it is disallowing empty field!
     # form = RewriteRuleAdminForm
@@ -106,7 +121,7 @@ class RewriteRuleAdmin(admin.ModelAdmin):
             'fields': ['register', 'service_location', 'service_params']                 
         }),
         ('URI Pattern and query parameters', {
-            'fields': ['pattern', 'use_lda', 'view_param','view_pattern']                 
+            'fields': ['pattern', 'use_lda', 'profile', 'view_param','view_pattern']                 
         })
         
         

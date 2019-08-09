@@ -20,7 +20,7 @@ class RewriteRule(models.Model):
     objects = RewriteRuleManager()
 
     def natural_key(self):
-        return(self.label)
+        return(self.label,)
     
         
     label = models.CharField(
@@ -72,12 +72,16 @@ class RewriteRule(models.Model):
     use_lda = models.BooleanField(
         default=True,
         verbose_name='Use LDA standard params',
-        help_text='Use LDA parameters (_format,_lang) to control content negotiation'
+        help_text='Use LDA parameters (_format,_lang) to control other non-profile aspects of content negotiation'
+    )
+    
+    profile = models.ManyToManyField("Profile",
+        help_text='profiles to match - either tokens matching view_param or as URIs in HTTP Accept-Profile headers. (NB supplied params override HTTP)' 
     )
     
     view_param = models.CharField(
         max_length=200, 
-        default='_view',
+        default='_profile',
         help_text='Query parameters to match, comma or ;  separated(e.g. LDA _view  defining information model requested )'
     )
     
@@ -85,7 +89,7 @@ class RewriteRule(models.Model):
         max_length=500, 
         blank = True,
         null = True,
-        help_text='regex patterns for params, separated by semicolons ; '
+        help_text='Optional - if no profiles set then regex patterns for matching param values, separated by semicolons ; '
     )
  
     representations = models.ManyToManyField(

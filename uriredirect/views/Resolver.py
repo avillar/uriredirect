@@ -22,6 +22,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if requested_extension :
         requested_extension = requested_extension.replace('.','')
     debug = False 
+    
     try:
         if request.GET['pdb'] :
             import pdb; pdb.set_trace()
@@ -30,6 +31,12 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         if request.GET['debug'] :
             debug=True
     except: pass
+    
+    try:
+        profile_prefs = request.META['HTTP_ACCEPT_PROFILE'].split(';')
+    except:
+        profile_prefs = None
+        
     # Determine if this server is aware of the requested registry
     requested_register=None
     default_register=None
@@ -68,13 +75,13 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     # find subset matching viewname, and other query param constraints
 
     rule = None # havent found anything yet until we check params
-
+    matched_profile = None
     clientaccept = request.META.get('HTTP_ACCEPT', '*')
     # note will ignore accept header and allow override format/lang in conneg if LDA convention in use
        
     for rulechain in rulechains :
         binding = rulechain[0] 
-        for patrule in rulechain :
+        for patrule in rulechain[1:] :
             (use_lda, ignore) = patrule.get_prop_from_tree('use_lda')
             if use_lda :
                 try:
@@ -86,6 +93,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                     accept = clientaccept # allow content negotiation only if not specified
             else :
                 accept = clientaccept
+            # check query string args before HTTP headers
             (queryparams, prule) = patrule.get_prop_from_tree('view_pattern')
             if queryparams :
                 viewprops = getattr(prule,'view_param')
@@ -105,6 +113,34 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                             rule = patrule 
                 except :
                     continue # viewprop not set in request so dont match but keep looking
+            elif patrule.profile.exists() :
+                try:
+                    requested_profile = request.GET[getattr(patrule,'view_param')] 
+                    for p in patrule.profile.all() :
+                        if( p.token==requested_profile):
+                            matched_profile = p
+                        else:
+                            matched_profile = p.profilesTransitive.get(token=requested_profile)
+                        if matched_profile :
+                            print "found token matching profile %s " % (p,)
+                            url_template = patrule.get_url_template(requested_extension, accept)
+                            if url_template :
+                                rule = patrule
+                                matched_profile=p
+                except:
+                    for rp in profile_prefs :
+                        for p in patrule.profile.all() :
+                            if( p.uri==rp):
+                                matched_profile = p
+                            else:
+                                matched_profile = p.profilesTransitive.get(uri=rp)
+                            if matched_profile :
+                                print "found token matching profile %s " % (p,)
+                                url_template = patrule.get_url_template(requested_extension, accept)
+                                if url_template :
+                                    rule = patrule
+                                    matched_profile=p
+                                    
             elif not rule :  # if no specific query set, then set - otherwise respect any match made by the more specific rule
                 url_template = binding.get_url_template(requested_extension, accept)
                 if url_template :
@@ -124,7 +160,12 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
-        'server' : binding.service_location.replace("http",request.scheme,1)  , 'path' : requested_uri,  'register_name' : registry_label, 'register' : requested_register.url.replace("http",request.scheme,1)  }
+        'server' : binding.service_location.replace("http",request.scheme,1) if binding.service_location else '' ,
+        'path' : requested_uri, 
+        'register_name' : registry_label,
+        'register' : requested_register.url.replace("http",request.scheme,1),
+        'profile' : matched_profile.token if matched_profile else ''
+        }
     
     
     # set up all default variables

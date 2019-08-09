@@ -15,7 +15,7 @@ class UriRegister(models.Model):
     objects = UriRegisterManager()
 
     def natural_key(self):
-        return(self.label)
+        return(self.label,)
         
     label = models.CharField(
         max_length=50,

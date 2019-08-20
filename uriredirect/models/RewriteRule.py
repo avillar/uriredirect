@@ -81,15 +81,15 @@ class RewriteRule(models.Model):
     
     view_param = models.CharField(
         max_length=200, 
-        default='_profile',
-        help_text='Query parameters to match, comma or ;  separated(e.g. LDA _view  defining information model requested )'
+        default='_profile,_view',
+        help_text='Query parameters to match, comma or ;  separated(e.g. default supports W3C conneg and LinkedDataAPI options)'
     )
     
     view_pattern = models.CharField(
         max_length=500, 
         blank = True,
         null = True,
-        help_text='Optional - if no profiles set then regex patterns for matching param values, separated by semicolons ; '
+        help_text='Optional - if set then use regex patterns for matching param values, rather than a speicfic registered profile token.'
     )
  
     representations = models.ManyToManyField(

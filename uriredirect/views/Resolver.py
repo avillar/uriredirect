@@ -100,9 +100,9 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                 if not viewprops :
                     HttpResponseServerError('view match set but the query parameter to match is not set for rule %s' % patrule)
                 try:
-                    viewpats = queryparams.split(';')
+                    viewpats = re.split(',|;',queryparams)
                     allfound = True
-                    for viewprop in viewprops.split(';') :
+                    for viewprop in re.split(',|;',viewprops) :
                         if not re.match(viewpats.pop(0),request.GET[viewprop]):
                             allfound = False
                             break
@@ -114,20 +114,25 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                 except :
                     continue # viewprop not set in request so dont match but keep looking
             elif patrule.profile.exists() :
-                try:
-                    requested_profile = request.GET[getattr(patrule,'view_param')] 
-                    for p in patrule.profile.all() :
-                        if( p.token==requested_profile):
-                            matched_profile = p
-                        else:
-                            matched_profile = p.profilesTransitive.get(token=requested_profile)
-                        if matched_profile :
-                            print "found token matching profile %s " % (p,)
-                            url_template = patrule.get_url_template(requested_extension, accept)
-                            if url_template :
-                                rule = patrule
-                                matched_profile=p
-                except:
+                try:                    
+                    rplist = getattr(patrule,'view_param') 
+                    for rp in re.split(',|;',rplist):
+                        try: 
+                            requested_profile = request.GET[rp]
+                        except:
+                            continue
+                        for p in patrule.profile.all() :
+                            if( p.token==requested_profile):
+                                matched_profile = p
+                            else:
+                                matched_profile = p.profilesTransitive.get(token=requested_profile)
+                            if matched_profile :
+                                print "found token matching profile %s " % (p,)
+                                url_template = patrule.get_url_template(requested_extension, accept)
+                                if url_template :
+                                    rule = patrule
+                                    matched_profile=p
+                except Exception as e:
                     for rp in profile_prefs :
                         for p in patrule.profile.all() :
                             if( p.uri==rp):

@@ -1,5 +1,6 @@
 LICENSE
 MANIFEST.in
+setup.py
 uriredirect/__init__.py
 uriredirect/urls.py
 uriredirect.egg-info/PKG-INFO

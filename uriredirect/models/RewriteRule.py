@@ -75,7 +75,8 @@ class RewriteRule(models.Model):
         help_text='Use LDA parameters (_format,_lang) to control other non-profile aspects of content negotiation'
     )
     
-    profile = models.ManyToManyField("Profile",
+    profile = models.ManyToManyField("Profile", blank=True, 
+        null = True,
         help_text='profiles to match - either tokens matching view_param or as URIs in HTTP Accept-Profile headers. (NB supplied params override HTTP)' 
     )
     

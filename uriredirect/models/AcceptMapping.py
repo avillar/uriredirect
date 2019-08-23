@@ -1,10 +1,20 @@
 from django.db import models
 
+
+class AcceptMappingManager(models.Manager):
+    def get_by_natural_key(self, rewrite_rule,media_type):
+        return self.get(rewrite_rule=rewrite_rule,media_type=media_type)
+        
 class AcceptMapping(models.Model):
     class Meta:
         app_label = 'uriredirect'
         verbose_name = 'Accept-Mapping'
         verbose_name_plural = 'Accept-Mapping'
+    
+    objects = AcceptMappingManager()
+        
+    def natural_key(self):
+        return(self.rewrite_rule, self.media_type)
         
     rewrite_rule = models.ForeignKey('RewriteRule')
     media_type = models.ForeignKey(

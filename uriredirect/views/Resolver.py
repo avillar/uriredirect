@@ -110,7 +110,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                             requested_view = None
                     viewpats = re.split(',|;',matchpatterns)
                     for viewpat in viewpats :                      
-                        if ((viewpat == "") and not requested_view) or re.match(requested_view,viewpat):
+                        if ((viewpat == "") and not requested_view) or ( requested_view and re.match(requested_view,viewpat)):
                             url_template = patrule.get_url_template(requested_extension, accept)
                             if url_template :
                                 rule = patrule 

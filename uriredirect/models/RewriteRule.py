@@ -97,7 +97,14 @@ class RewriteRule(models.Model):
         'MediaType', 
         through='AcceptMapping',
     )
-      
+    
+    #calculated on save
+    available_mime_types = [] 
+    
+    def save(self,*args,**kwargs):  
+        super(RewriteRule, self).save(*args,**kwargs)
+        available_mime_types = [ media.mime_type for media in self.representations.all() ]
+        
     def __unicode__(self):
         return self.label
     
@@ -110,8 +117,11 @@ class RewriteRule(models.Model):
         if len(accept_mappings) == 0:
             return [], ''
         else:
-            return [ mapping.redirect_to for mapping in accept_mappings ], requested_extension
+            return [ mapping.redirect_to for mapping in accept_mappings ], accept_mappings[0].media_type.mime_type
     
+    def extension_list(self):        
+        return list(self.representations.values_list("mime_type",flat=True))
+        
     def get_pattern(self) :
         if self.pattern :
             return self.pattern
@@ -165,10 +175,11 @@ class RewriteRule(models.Model):
         return params
         
     def content_negotiation(self, accept):
-        available_mime_types = [ media.mime_type for media in self.representations.all() ]
-        if len(available_mime_types) == 0: return [], ''
+        if len(self.available_mime_types) == 0:
+            self.available_mime_types = [ media.mime_type for media in self.representations.all() ]
+        if len(self.available_mime_types) == 0: return [], ''
         
-        matching_content_type = mimeparse.best_match(available_mime_types, accept)
+        matching_content_type = mimeparse.best_match(self.available_mime_types, accept)
         accept_mappings = AcceptMapping.objects.filter(
             rewrite_rule = self,
             media_type__mime_type = matching_content_type
@@ -179,20 +190,19 @@ class RewriteRule(models.Model):
     def get_url_template(self, requested_extension , accept ) :
         # If given a file extension, that should be checked first
         if requested_extension != None:
-            url_templates, file_extension = self.extension_match(requested_extension)
-            if url_templates :
-                return url_templates[0]
-            elif self.parent :
-                return self.parent.get_url_template( requested_extension , accept )
-        
-        if accept:
+            url_templates, content_type = self.extension_match(requested_extension)
+        elif accept:
             url_templates, content_type = self.content_negotiation(accept)
-            if url_templates :
-                return url_templates[0]
-            elif self.parent :
-                return self.parent.get_url_template( None , accept )
+        else:
+            return None
             
-        return None    
+        if url_templates :
+            return url_templates[0], content_type
+        elif self.parent :
+            return self.parent.get_url_template( requested_extension , accept )
+    
+            
+           
                 
     def resolve_url_template(self, requested_uri, url_template, vars, qvars):
         # get substitution groups from original pattern

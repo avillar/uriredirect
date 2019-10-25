@@ -18,18 +18,26 @@ def resolve_registerslash_uri(request, registry_label,requested_extension):
     return resolve_uri(request, registry_label, "/", requested_extension )
     
 def resolve_uri(request, registry_label, requested_uri, requested_extension):
-    if request.META['REQUEST_METHOD'] != 'GET':
-        return HttpResponseNotAllowed(['GET'])
+    if request.META['REQUEST_METHOD'] == 'GET':
+        req=request.GET
+        head=False
+    elif request.META['REQUEST_METHOD'] == 'HEAD':
+        req=request.GET
+        head=True
+    else:
+        return HttpResponseNotAllowed([request.META['REQUEST_METHOD']])
+        
     if requested_extension :
         requested_extension = requested_extension.replace('.','')
     debug = False 
     
     try:
-        if request.GET['pdb'] :
+        if req['pdb'] :
             import pdb; pdb.set_trace()
-    except: pass
+    except:
+        pass
     try:
-        if request.GET['debug'] :
+        if req['debug'] :
             debug=True
     except: pass
     
@@ -73,10 +81,19 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         if len(rulechains) == 0:
             return HttpResponseNotFound('The requested URI base does not match base URI pattern for any rewrite rules')
  
-    # find subset matching viewname, and other query param constraints
+    # at this point we have all the URIs that match the bnase URI - thats enough to list the available profiles for the base resource
+    if requested_register.url:
+        register_uri_base = requested_register.url
+    else:
+        host_base = "://".join((request.scheme,request.get_host()))   
+        register_uri_base = "".join((host_base,request.path[:request.path.index(registry_label)-1]))
+           
+    
+    # now to resolve redirect we need to find subset of rules matching viewname, and other query param constraints
 
     rule = None # havent found anything yet until we check params
     matched_profile = None
+    content_type = None
     clientaccept = request.META.get('HTTP_ACCEPT', '*')
     # note will ignore accept header and allow override format/lang in conneg if LDA convention in use
        
@@ -86,7 +103,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             (use_lda, ignore) = patrule.get_prop_from_tree('use_lda')
             if use_lda :
                 try:
-                    requested_extension= request.GET['_format']
+                    requested_extension= req['_format']
                 except : pass
                 if requested_extension :
                     accept = None
@@ -104,14 +121,14 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                 else:
                     for viewprop in re.split(',|;',viewprops) :
                         try:
-                            requested_view = request.GET[viewprop]
+                            requested_view = req[viewprop]
                             break
                         except:
                             requested_view = None
                     viewpats = re.split(',|;',matchpatterns)
                     for viewpat in viewpats :                      
                         if ((viewpat == "") and not requested_view) or ( requested_view and re.match(requested_view,viewpat)):
-                            url_template = patrule.get_url_template(requested_extension, accept)
+                            url_template,content_type = patrule.get_url_template(requested_extension, accept)
                             if url_template :
                                 rule = patrule 
                             break
@@ -122,10 +139,11 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                 # may be set in header - but try to match query string arg with profile first
                                    
                 rplist = getattr(patrule,'view_param') 
+                requested_profile = None
                 if rplist:
                     for rp in re.split(',|;',rplist):
                         try: 
-                            requested_profile = request.GET[rp]
+                            requested_profile = req[rp]
                         except:
                             continue
                         for p in patrule.profile.all() :
@@ -138,41 +156,34 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                                     matched_profile = None
                             if matched_profile :
                                 print "found token matching profile %s " % (p,)
-                                url_template = patrule.get_url_template(requested_extension, accept)
+                                url_template,content_type = patrule.get_url_template(requested_extension, accept)
                                 if url_template :
                                     rule = patrule
                                     matched_profile=p
-                elif profile_prefs:
+                if not requested_profile and profile_prefs:
                     for rp in profile_prefs :
                         for p in patrule.profile.all() :
                             if( p.uri==rp):
                                 matched_profile = p
                             else:
-                                matched_profile = p.profilesTransitive.get(uri=rp)
+                                try:
+                                    matched_profile = p.profilesTransitive.get(uri=rp)
+                                except:
+                                    matched_profile = None
                             if matched_profile :
                                 print "found token matching profile %s " % (p,)
-                                url_template = patrule.get_url_template(requested_extension, accept)
+                                url_template,content_type = patrule.get_url_template(requested_extension, accept)
                                 if url_template :
                                     rule = patrule
                                     matched_profile=p
                                     
             elif not rule :  # if no specific query set, then set - otherwise respect any match made by the more specific rule
-                url_template = binding.get_url_template(requested_extension, accept)
+                url_template,content_type = binding.get_url_template(requested_extension, accept)
                 if url_template :
                     rule = patrule
         if rule :
             break
-                
-    if not rule :
-        return HttpResponseNotFound('A profile for the requested URI base exists but no rules match for the requested format')
  
-    # print url_template 
-    if requested_register.url:
-        register_uri_base = requested_register.url
-    else:
-        host_base = "://".join((request.scheme,request.get_host()))   
-        register_uri_base = "".join((host_base,request.path[:request.path.index(registry_label)-1]))
-    
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
         'server' : binding.service_location.replace("http",request.scheme,1) if binding.service_location else '' ,
@@ -180,28 +191,70 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         'register_name' : registry_label,
         'register' : requested_register.url.replace("http",request.scheme,1),
         'profile' : matched_profile.token if matched_profile else ''
-        }
-    
-    
-    # set up all default variables
-    if  requested_uri :
-        try:
-            term = requested_uri[requested_uri.rindex("/")+1:]
-            vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)),   'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")] })
-        except:
-            vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)) ,   'term' : requested_uri , 'path_base' : requested_uri })
+        } 
+        
+    if not rule :
+        response = HttpResponseNotFound('A profile for the requested URI base exists but no rules match for the requested format')
+        url=None
     else:
-        vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
+        # print url_template 
+ 
+ 
+        
+        
+        # set up all default variables
+        if  requested_uri :
+            try:
+                term = requested_uri[requested_uri.rindex("/")+1:]
+                vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)),   'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")] })
+            except:
+                vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)) ,   'term' : requested_uri , 'path_base' : requested_uri })
+        else:
+            vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
+        
+        
+        # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
+        url = rule.resolve_url_template(requested_uri, url_template, vars, req  )
     
-    
-    # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
-    url = rule.resolve_url_template(requested_uri, url_template, vars, request.GET  )
-    
+    proflinks = generate_links_for_profiles("/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)), rulechains, matched_profile, content_type)
+        
     # Perform the redirection if the resolver returns something, or a 404 instead
     if debug:
-        return HttpResponse("Debug mode: rulematched (%s) generated %s \n\n template variables available: \n %s " % ( rule, url, json.dumps(vars, indent = 4) ),content_type="text/plain")
+        response = HttpResponse("Debug mode: rule matched (%s , %s) generated %s \n\n template variables available: \n %s \n\n Link: \n\t%s" % ( rule, content_type, url, json.dumps(vars , indent = 4),'\n\t'.join( proflinks.split(',')) ),content_type="text/plain")
     elif url:
-        return HttpResponseSeeOther(url)
+        response =  HttpResponseSeeOther(url)
     else:
-        return HttpResponseNotFound('The requested URI did not return any document')
+        response = HttpResponseNotFound('The requested URI did not return any document')
 
+    response.setdefault("Link",proflinks)
+    if matched_profile:
+        mps = "<" + matched_profile.uri + ">"
+        for p in matched_profile.profilesTransitive.values_list('uri'):
+            mps += ",<%s>" % p
+        response.setdefault("Content-Profile", mps)
+    
+    return response
+
+def generate_links_for_profiles(uri,rulechains,matched_profile,content_type):
+    links = {} 
+    for rc in rulechains:
+        for rule in rc[1:]: 
+            if rule.profile :
+                for prof in rule.profile.all():
+                    links[prof.uri] = rule.extension_list()
+
+    return ",".join( makelinkheaders(uri,links, matched_profile, content_type))
+    
+def makelinkheaders (uri,links,matched_profile,content_type):
+    proflinks= []
+    for prof in links.keys():
+        isprof = matched_profile and matched_profile.uri == prof
+        for media_type in links[prof]:
+            ismedia = media_type == content_type
+            proflinks.append( '<%s>; rel="%s"; type="%s"; profile="%s"' % ( uri, 'self' if isprof and ismedia else 'alternate', media_type, prof) )
+    return proflinks
+    
+            
+       
+    
+    

@@ -16,7 +16,23 @@ def resolve_registerslash_uri(request, registry_label,requested_extension):
         resolve a request to the register itself - with a trailing slash
     """
     return resolve_uri(request, registry_label, "/", requested_extension )
-    
+
+def qordered_prefs(prefstring):
+    qprofs= [x.strip() for x in prefstring.split(',')]
+    profile_qs = {}
+    for qprof in qprofs:
+        parts = [x.strip() for x in qprof.split(';')]
+        prof = parts[0]
+        if prof[0] == '<':
+            prof = prof[1:-1]
+        profile_qs[prof]=1 # default value
+        for p in parts[1:]:
+            kvp= [x.strip() for x in p.split('=')]
+            if kvp[0] == 'q':
+                profile_qs[prof]=kvp[1]
+    return sorted( profile_qs, key=profile_qs.get )    
+        
+        
 def resolve_uri(request, registry_label, requested_uri, requested_extension):
     if request.META['REQUEST_METHOD'] == 'GET':
         req=request.GET
@@ -42,7 +58,8 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     except: pass
     
     try:
-        profile_prefs = request.META['HTTP_ACCEPT_PROFILE'].split(';')
+        profile_prefs = qordered_prefs(request.META['HTTP_ACCEPT_PROFILE'])
+            
     except:
         profile_prefs = None
         
@@ -143,24 +160,28 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                 if rplist:
                     for rp in re.split(',|;',rplist):
                         try: 
-                            requested_profile = req[rp]
+                            requested_profile_list = req[rp]
                         except:
                             continue
-                        for p in patrule.profile.all() :
-                            if( p.token==requested_profile):
-                                matched_profile = p
-                            else:
-                                try:
-                                    matched_profile = p.profilesTransitive.get(token=requested_profile)
-                                except ObjectDoesNotExist:
-                                    matched_profile = None
-                            if matched_profile :
-                                print "found token matching profile %s " % (p,)
-                                url_template,content_type = patrule.get_url_template(requested_extension, accept)
-                                if url_template :
-                                    rule = patrule
-                                    matched_profile=p
-                if not requested_profile and profile_prefs:
+                        for requested_profile in qordered_prefs(requested_profile_list):
+                            for p in patrule.profile.all() :
+                                if( p.token==requested_profile):
+                                    matched_profile = p
+                                else:
+                                    try:
+                                        matched_profile = p.profilesTransitive.get(token=requested_profile)
+                                    except ObjectDoesNotExist:
+                                        matched_profile = None
+                                if matched_profile :
+                                    print "found token matching profile %s " % (p,)
+                                    url_template,content_type = patrule.get_url_template(requested_extension, accept)
+                                    if url_template :
+                                        rule = patrule
+                                        matched_profile=p
+                                        break;
+                            if rule:
+                                break ;
+                if not rule and not requested_profile and profile_prefs:
                     for rp in profile_prefs :
                         for p in patrule.profile.all() :
                             if( p.uri==rp):
@@ -176,6 +197,9 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                                 if url_template :
                                     rule = patrule
                                     matched_profile=p
+                                    break
+                        if matched_profile:
+                            break
                                     
             elif not rule :  # if no specific query set, then set - otherwise respect any match made by the more specific rule
                 url_template,content_type = binding.get_url_template(requested_extension, accept)

@@ -157,6 +157,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                                    
                 rplist = getattr(patrule,'view_param') 
                 requested_profile = None
+                matched_profile = None
                 if rplist:
                     for rp in re.split(',|;',rplist):
                         try: 
@@ -165,19 +166,17 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                             continue
                         for requested_profile in qordered_prefs(requested_profile_list):
                             for p in patrule.profile.all() :
-                                if( p.token==requested_profile):
+                                if( requested_profile in p.token.split(',')):
                                     matched_profile = p
                                 else:
-                                    try:
-                                        matched_profile = p.profilesTransitive.get(token=requested_profile)
-                                    except ObjectDoesNotExist:
-                                        matched_profile = None
+                                    for toklist in p.profilesTransitive.values_list('token', flat=True):
+                                        if( requested_profile in toklist.split(',')):
+                                            matched_profile = p
+                                   
                                 if matched_profile :
-                                    print "found token matching profile %s " % (p,)
                                     url_template,content_type = patrule.get_url_template(requested_extension, accept)
                                     if url_template :
                                         rule = patrule
-                                        matched_profile=p
                                         break;
                             if rule:
                                 break ;
@@ -260,14 +259,16 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     return response
 
 def generate_links_for_profiles(uri,rulechains,matched_profile,content_type):
-    links = {} 
+    links = {}
+    tokens = {}
     for rc in rulechains:
         for rule in rc[1:]: 
             if rule.profile :
                 for prof in rule.profile.all():
                     links[prof.uri] = rule.extension_list()
+                    tokens[prof.uri] = prof.token
 
-    return ",".join( makelinkheaders(uri,links, matched_profile, content_type))
+    return ",".join( (",".join(tokenmappings(tokens)), ",".join(makelinkheaders(uri,links, matched_profile, content_type))))
     
 def makelinkheaders (uri,links,matched_profile,content_type):
     proflinks= []
@@ -277,6 +278,13 @@ def makelinkheaders (uri,links,matched_profile,content_type):
             ismedia = media_type == content_type
             proflinks.append( '<%s>; rel="%s"; type="%s"; profile="%s"' % ( uri, 'self' if isprof and ismedia else 'alternate', media_type, prof) )
     return proflinks
+
+def tokenmappings (tokens):
+    tms= []
+    for prof in tokens.keys():
+        for tok in tokens[prof].split(','):
+            tms.append( '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="%s"; anchor=<%s>' % ( tok,prof) )
+    return tms
     
             
        

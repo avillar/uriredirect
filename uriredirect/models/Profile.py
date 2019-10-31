@@ -28,7 +28,7 @@ class Profile(models.Model):
         
     token = models.CharField(
         max_length=100, blank=False, null=False,
-        unique = True, help_text='The short token this profile may be invoked by'
+        unique = True, help_text='A comma separated list of short tokens this profile may be invoked by'
     )
     
     mediaprofs = models.CharField(

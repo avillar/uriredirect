@@ -71,8 +71,8 @@ class RewriteRule(models.Model):
 
     use_lda = models.BooleanField(
         default=True,
-        verbose_name='Use LDA standard params',
-        help_text='Use LDA parameters (_format,_lang) to control other non-profile aspects of content negotiation'
+        verbose_name='Use Conneg-by-application profile and LDA standard params',
+        help_text='Use either conneg-by-ap {_mediatype} or LDA parameters (_format,_lang) to control other non-profile aspects of content negotiation'
     )
     
     profile = models.ManyToManyField("Profile", blank=True, 

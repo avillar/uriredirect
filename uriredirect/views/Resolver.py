@@ -121,7 +121,10 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             if use_lda :
                 try:
                     requested_extension= req['_format']
-                except : pass
+                except : 
+                    try:
+                        requested_extension= req['_mediatype']
+                    except : pass
                 if requested_extension :
                     accept = None
                 else :

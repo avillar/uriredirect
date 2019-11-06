@@ -57,6 +57,8 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             debug=True
     except: pass
     
+    clientaccept = request.META.get('HTTP_ACCEPT', '*')
+    
     try:
         profile_prefs = qordered_prefs(request.META['HTTP_ACCEPT_PROFILE'])
             
@@ -108,10 +110,37 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     # now to resolve redirect we need to find subset of rules matching viewname, and other query param constraints
 
+
+    
+    rule,matched_profile,content_type,exception,url,substitutable_vars = match_rule( request , rulechains, requested_register, registry_label, requested_uri, profile_prefs, requested_extension,clientaccept) 
+ 
+
+    
+    links,tokens = collate_alternates(rulechains)
+    proflinks = generate_links_for_profiles("/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)), links, tokens, matched_profile, content_type)
+        
+    # Perform the redirection if the resolver returns something, or a 404 instead
+    if debug:
+        response = HttpResponse("Debug mode: rule matched (%s , %s) generated %s \n\n template variables available: \n %s \n\n Link: \n\t%s" % ( rule, content_type, url, json.dumps(substitutable_vars , indent = 4),'\n\t'.join( proflinks.split(',')) ),content_type="text/plain")
+    elif url:
+        response =  HttpResponseSeeOther(url)
+    else:
+        response = HttpResponseNotFound('The requested URI did not return any document')
+
+    response.setdefault("Link",proflinks)
+    if matched_profile:
+        mps = "<" + matched_profile.uri + ">"
+        for p in matched_profile.profilesTransitive.values_list('uri'):
+            mps += ",<%s>" % p
+        response.setdefault("Content-Profile", mps)
+    
+    return response
+
+def match_rule( request, rulechains,requested_register, registry_label, requested_uri, profile_prefs, requested_extension ,clientaccept ): 
     rule = None # havent found anything yet until we check params
     matched_profile = None
     content_type = None
-    clientaccept = request.META.get('HTTP_ACCEPT', '*')
+    exception = None
     # note will ignore accept header and allow override format/lang in conneg if LDA convention in use
        
     for rulechain in rulechains :
@@ -120,10 +149,10 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             (use_lda, ignore) = patrule.get_prop_from_tree('use_lda')
             if use_lda :
                 try:
-                    requested_extension= req['_format']
+                    requested_extension= request.GET['_format']
                 except : 
                     try:
-                        requested_extension= req['_mediatype']
+                        requested_extension= request.GET['_mediatype']
                     except : pass
                 if requested_extension :
                     accept = None
@@ -137,11 +166,12 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             if matchpatterns :
                 viewprops = getattr(patrule,'view_param') # prule ?
                 if not viewprops :
-                    HttpResponseServerError('profile match pattern set but the query parameter to match is not set for rule %s' % patrule)
+                    exception = 'resource matches pattern set but the query parameter to match is not set for rule %s' % patrule
+                    return (rule,matched_profile,content_type,exception)
                 else:
                     for viewprop in re.split(',|;',viewprops) :
                         try:
-                            requested_view = req[viewprop]
+                            requested_view = request.GET[viewprop]
                             break
                         except:
                             requested_view = None
@@ -242,26 +272,20 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
         url = rule.resolve_url_template(requested_uri, url_template, vars, req  )
     
-    proflinks = generate_links_for_profiles("/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)), rulechains, matched_profile, content_type)
-        
-    # Perform the redirection if the resolver returns something, or a 404 instead
-    if debug:
-        response = HttpResponse("Debug mode: rule matched (%s , %s) generated %s \n\n template variables available: \n %s \n\n Link: \n\t%s" % ( rule, content_type, url, json.dumps(vars , indent = 4),'\n\t'.join( proflinks.split(',')) ),content_type="text/plain")
-    elif url:
-        response =  HttpResponseSeeOther(url)
-    else:
-        response = HttpResponseNotFound('The requested URI did not return any document')
-
-    response.setdefault("Link",proflinks)
-    if matched_profile:
-        mps = "<" + matched_profile.uri + ">"
-        for p in matched_profile.profilesTransitive.values_list('uri'):
-            mps += ",<%s>" % p
-        response.setdefault("Content-Profile", mps)
+    return rule,matched_profile,content_type,exception, url, vars 
     
-    return response
-
-def generate_links_for_profiles(uri,rulechains,matched_profile,content_type):
+def generate_links_for_profiles(uri,links,tokens,matched_profile,content_type):
+    """ Generate the set of link headers and token mappings for a set of rulechains for a resource uri
+    
+    returns {links} and {tokens} dicts - keys are profile URI 
+    """
+    return ",".join( (",".join(tokenmappings(tokens)), ",".join(makelinkheaders(uri,links, matched_profile, content_type))))  
+    
+def collate_alternates(rulechains):
+    """ Collate available representations 
+    
+    cachable collation of links and token mappings for a set of resolving rules that determine what resources are available.
+    """
     links = {}
     tokens = {}
     for rc in rulechains:
@@ -270,8 +294,8 @@ def generate_links_for_profiles(uri,rulechains,matched_profile,content_type):
                 for prof in rule.profile.all():
                     links[prof.uri] = rule.extension_list()
                     tokens[prof.uri] = prof.token
+    return links,tokens
 
-    return ",".join( (",".join(tokenmappings(tokens)), ",".join(makelinkheaders(uri,links, matched_profile, content_type))))
     
 def makelinkheaders (uri,links,matched_profile,content_type):
     proflinks= []

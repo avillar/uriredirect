@@ -1,11 +1,31 @@
 # URI Redirection Engine
 
 ## What does it do?
+Dereferences a request to a URL for a particular form of information.
+
+The form of information may be determined by media (MIME) type, langauge - or more flexibly by "profile" - i.e. the data model to return.
+
+It creates a HTTP 303 redirect to the required resource according to configured rules.
+
+It also supports listing available views according to the W3C Content Negotiation by Profile specification.
+
+## How does it do it?
 - Uses rules to bind URIs with parameters to service endpoints using templated URL patterns.
-- Allows you to put together a list of rewrite rules, very similar to Apache's mod_rewrite, except the rules are persisted in a database, and Django provides a great administration interface.
+- Rules are based on a regex pattern, combined with view(profile) based on either registered profiles or regex. Registered profiles may be listed to aid discovery of available options.
+- Allows you to put together a list of rewrite rules, very similar to Apache's mod_rewrite, except the rules are persisted in a database and Django provides a great administration interface.
 - Allows rules to inherit and override or extend parent rules, creating a flexible capability to desribe and bind to complex APIs with many optional parameters.
 - Supports re-usable "API rules", so standard APIs and Linked Data best practices can be implemented simply by binding a URI base (namespace) to the APIs deployed to service it.
 - allows specific rules to override default bindings for URL parameters (e.g. Linked Data _\_view_ parameter to choose specific content profile to return (in addition to MIME type encoding choice via HTTP Content-Type headers)
+
+## Supported standards
+URIredirect implements:
+
+1. HTTP 1.1 Content Negotiation [https://www.w3.org/Protocols/rfc2616/rfc2616-sec12.html]
+1. https://www.w3.org/TR/dx-prof-conneg/ HTTP headers profile [http://www.w3.org/ns/dx/conneg/profile/http]
+
+1. https://www.w3.org/TR/dx-prof-conneg/ Query Strings profile [http://www.w3.org/ns/dx/conneg/profile/qsa]
+1. https://www.w3.org/TR/dx-prof-conneg/ Resource Representation Description [http://www.w3.org/ns/dx/conneg/profile/rrd]
+
 
 ## Rules
 - Your rewrite rules specify a regular expression pattern. Incoming URI requests are matched against these patterns, and the matching rule determines the destination of the request.

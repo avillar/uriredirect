@@ -112,7 +112,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
 
 
     
-    rule,matched_profile,content_type,exception,url,substitutable_vars = match_rule( request , rulechains, requested_register, registry_label, requested_uri, profile_prefs, requested_extension,clientaccept) 
+    rule,matched_profile,content_type,exception,url,substitutable_vars = match_rule( request , rulechains, requested_register, register_uri_base, registry_label, requested_uri, profile_prefs, requested_extension,clientaccept) 
  
 
     
@@ -136,7 +136,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     return response
 
-def match_rule( request, rulechains,requested_register, registry_label, requested_uri, profile_prefs, requested_extension ,clientaccept ): 
+def match_rule( request, rulechains,requested_register,register_uri_base,registry_label, requested_uri, profile_prefs, requested_extension ,clientaccept ): 
     rule = None # havent found anything yet until we check params
     matched_profile = None
     content_type = None
@@ -194,7 +194,7 @@ def match_rule( request, rulechains,requested_register, registry_label, requeste
                 if rplist:
                     for rp in re.split(',|;',rplist):
                         try: 
-                            requested_profile_list = req[rp]
+                            requested_profile_list = request.GET[rp]
                         except:
                             continue
                         for requested_profile in qordered_prefs(requested_profile_list):
@@ -270,7 +270,7 @@ def match_rule( request, rulechains,requested_register, registry_label, requeste
         
         
         # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
-        url = rule.resolve_url_template(requested_uri, url_template, vars, req  )
+        url = rule.resolve_url_template(requested_uri, url_template, vars, request  )
     
     return rule,matched_profile,content_type,exception, url, vars 
     

@@ -108,11 +108,17 @@ class RewriteRule(models.Model):
     def __unicode__(self):
         return self.label
     
-    def extension_match(self, requested_extension):        
-        accept_mappings = AcceptMapping.objects.filter(
-            rewrite_rule = self,
-            media_type__file_extension = requested_extension  
-        )
+    def extension_match(self, requested_extension): 
+        if '/' in requested_extension :
+           accept_mappings = AcceptMapping.objects.filter(
+                rewrite_rule = self,
+                media_type__mime_type = requested_extension  
+            )
+        else:
+            accept_mappings = AcceptMapping.objects.filter(
+                rewrite_rule = self,
+                media_type__file_extension = requested_extension  
+            )
         
         if len(accept_mappings) == 0:
             return [], ''

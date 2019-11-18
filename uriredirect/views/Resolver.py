@@ -1,9 +1,30 @@
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseServerError, HttpResponsePermanentRedirect, HttpResponseNotAllowed
 from django.core.exceptions import ObjectDoesNotExist
-from uriredirect.models import UriRegister
+from uriredirect.models import UriRegister,Profile
 from uriredirect.http import HttpResponseNotAcceptable, HttpResponseSeeOther
 import re
 import json
+from rdflib import Graph,namespace
+from rdflib.term import URIRef, Literal
+from rdflib.namespace import Namespace,NamespaceManager,RDF
+from django.template.loader import render_to_string
+import mimeparse
+
+ALTR="http://www.w3.org/ns/dx/conneg/altr"
+ALTRNS = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
+ALTR_HASREPRESENTATION = URIRef( "#".join( (ALTR,'hasRepresentation')))
+ALTR_REPRESENTATION = URIRef( "#".join( (ALTR,'Representation')))
+DCT = Namespace("http://purl.org/dc/terms/")
+DCT_CONFORMSTO= URIRef("http://purl.org/dc/terms/conformsTo")
+DCT_FORMAT= URIRef("http://purl.org/dc/terms/format")
+RDFLIBFORMATS = { 
+    'application/ld+json': 'jsonld' ,
+    'text/html' :'html',
+    'text/turtle': 'ttl',
+    'application/json': 'jsonld' ,
+    'application/rdf+xml': 'rdfxml' }
+
+
 
 def resolve_register_uri(request, registry_label,requested_extension):
     """
@@ -89,6 +110,11 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     # Find rewrite rules matching the requested uri Base - including the rule that binds the rules to a service - so bundled into 
     # rulechains - where first rule is the one bound to the register and service location.
+    #
+    # we need to find this anyway (unless we have cached it in some future enhancement - as we need to be able to spit out the alternates view
+    # based on the matching rules even if we are not trying to then match a rule to the conneg parameters
+    #
+    
     if requested_register:
         rulechains = requested_register.find_matching_rules(requested_uri)
     if not requested_register or len(rulechains) == 0:
@@ -98,9 +124,9 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         rulechains = default_register.find_matching_rules(requested_uri) 
         requested_register= default_register
         if len(rulechains) == 0:
-            return HttpResponseNotFound('The requested URI base does not match base URI pattern for any rewrite rules')
+            return HttpResponseNotFound('The requested URI does not match any resource - no rules found for URI base')
  
-    # at this point we have all the URIs that match the bnase URI - thats enough to list the available profiles for the base resource
+    # at this point we have all the URIs that match the base URI - thats enough to list the available profiles for the base resource
     if requested_register.url:
         register_uri_base = requested_register.url
     else:
@@ -108,35 +134,62 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         register_uri_base = "".join((host_base,request.path[:request.path.index(registry_label)-1]))
            
     
-    # now to resolve redirect we need to find subset of rules matching viewname, and other query param constraints
+    # rebuild full URI
+    if  requested_uri :
+        uri= "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri))
+    else:
+        uri= register_uri_base 
 
-
-    
-    rule,matched_profile,content_type,exception,url,substitutable_vars = match_rule( request , rulechains, requested_register, register_uri_base, registry_label, requested_uri, profile_prefs, requested_extension,clientaccept) 
- 
-
-    
     links,tokens = collate_alternates(rulechains)
+    
+    response_body = None
+    try:
+        if profile_prefs == ALTR or request.GET['_profile'] == "all" :
+            matched_profile,created = Profile.objects.get_or_create(token="all", uri=ALTR)
+            try: 
+                content_type=request.GET['_mediatype']
+            except:
+                content_type= mimeparse.best_match( RDFLIBFORMATS.keys() , clientaccept) 
+            if content_type == 'text/html' :
+                # call templating to turn to HTMLmake_altr_graph
+                response_body= render_to_string('altr.html', {'links':links, 'uri':uri, 'tokens':tokens})
+            else:
+                response_body = make_altr_graph (uri,links,tokens,RDFLIBFORMATS[content_type])
+    except Exception as e:
+        print e
+    
+    if not response_body:     
+        # now to resolve redirect we need to find subset of rules matching viewname, and other query param constraints
+        rule,matched_profile,content_type,exception,url,substitutable_vars = match_rule( request , uri, rulechains, requested_register, register_uri_base, registry_label, requested_uri, profile_prefs, requested_extension,clientaccept) 
+    else:
+        rule=None
+        substitutable_vars= None
+        url=None
+        
+        
     proflinks = generate_links_for_profiles("/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)), links, tokens, matched_profile, content_type)
         
     # Perform the redirection if the resolver returns something, or a 404 instead
     if debug:
-        response = HttpResponse("Debug mode: rule matched (%s , %s) generated %s \n\n template variables available: \n %s \n\n Link: \n\t%s" % ( rule, content_type, url, json.dumps(substitutable_vars , indent = 4),'\n\t'.join( proflinks.split(',')) ),content_type="text/plain")
+        response = HttpResponse("Debug mode: rule matched (%s , %s) generated %s \n\n template variables available: \n %s \n\n Link: \n\t%s\n\n Body \n%s" % ( rule, content_type, url, json.dumps(substitutable_vars , indent = 4),'\n\t'.join( proflinks.split(',')), response_body ),content_type="text/plain")
+    elif response_body:
+        response = HttpResponse(response_body,content_type=content_type) 
     elif url:
         response =  HttpResponseSeeOther(url)
     else:
         response = HttpResponseNotFound('The requested URI did not return any document')
 
-    response.setdefault("Link",proflinks)
+
     if matched_profile:
         mps = "<" + matched_profile.uri + ">"
         for p in matched_profile.profilesTransitive.values_list('uri'):
             mps += ",<%s>" % p
         response.setdefault("Content-Profile", mps)
-    
+        
+    response.setdefault("Link",proflinks)    
     return response
 
-def match_rule( request, rulechains,requested_register,register_uri_base,registry_label, requested_uri, profile_prefs, requested_extension ,clientaccept ): 
+def match_rule( request, uri, rulechains,requested_register,register_uri_base,registry_label, requested_uri, profile_prefs, requested_extension ,clientaccept ): 
     rule = None # havent found anything yet until we check params
     matched_profile = None
     content_type = None
@@ -262,9 +315,9 @@ def match_rule( request, rulechains,requested_register,register_uri_base,registr
         if  requested_uri :
             try:
                 term = requested_uri[requested_uri.rindex("/")+1:]
-                vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)),   'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")] })
+                vars.update({ 'uri' : uri,   'term' : term , 'path_base' : requested_uri[: requested_uri.rindex("/")] })
             except:
-                vars.update({ 'uri' : "/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)) ,   'term' : requested_uri , 'path_base' : requested_uri })
+                vars.update({ 'uri' : uri ,   'term' : requested_uri , 'path_base' : requested_uri })
         else:
             vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
         
@@ -279,7 +332,7 @@ def generate_links_for_profiles(uri,links,tokens,matched_profile,content_type):
     
     returns {links} and {tokens} dicts - keys are profile URI 
     """
-    return ",".join( (",".join(tokenmappings(tokens)), ",".join(makelinkheaders(uri,links, matched_profile, content_type))))  
+    return ",".join( (",".join(tokenmappings(tokens)), ",".join(makelinkheaders(uri,links,tokens, matched_profile, content_type))))  
     
 def collate_alternates(rulechains):
     """ Collate available representations 
@@ -297,7 +350,8 @@ def collate_alternates(rulechains):
     return links,tokens
 
     
-def makelinkheaders (uri,links,matched_profile,content_type):
+def makelinkheaders (uri,links,tokens,matched_profile,content_type):
+    """ make a serialisation of available profiles in Link Header syntax """
     proflinks= []
     for prof in links.keys():
         isprof = matched_profile and matched_profile.uri == prof
@@ -305,6 +359,23 @@ def makelinkheaders (uri,links,matched_profile,content_type):
             ismedia = media_type == content_type
             proflinks.append( '<%s>; rel="%s"; type="%s"; profile="%s"' % ( uri, 'self' if isprof and ismedia else 'alternate', media_type, prof) )
     return proflinks
+
+def make_altr_graph (uri,links,tokens,content_type):
+    """ make a serialisation of the altR model for W3C list_profiles using content type requested """
+    print content_type
+    gr = Graph()
+    nsgr = NamespaceManager(gr)
+    nsgr.bind("altr", ALTRNS)
+    nsgr.bind("dct", DCT)
+    id = URIRef(uri)
+    for prof in links.keys():
+        puri = URIRef(prof)
+        rep = URIRef( "?_profile=".join((uri, tokens[prof])))
+        gr.add( (id, ALTR_HASREPRESENTATION , rep) )
+        gr.add( (rep, DCT_CONFORMSTO , puri) )
+        for media_type in links[prof]:
+            gr.add( (rep, DCT_FORMAT , Literal( media_type)) )
+    return gr.serialize(format=content_type)
 
 def tokenmappings (tokens):
     tms= []

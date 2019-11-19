@@ -18,11 +18,11 @@ DCT = Namespace("http://purl.org/dc/terms/")
 DCT_CONFORMSTO= URIRef("http://purl.org/dc/terms/conformsTo")
 DCT_FORMAT= URIRef("http://purl.org/dc/terms/format")
 RDFLIBFORMATS = { 
-    'application/ld+json': 'jsonld' ,
+    'application/ld+json': 'json-ld' ,
     'text/html' :'html',
     'text/turtle': 'ttl',
-    'application/json': 'jsonld' ,
-    'application/rdf+xml': 'rdfxml' }
+    'application/json': 'json-ld' ,
+    'application/rdf+xml': 'xml' }
 
 ALTR_PROFILE = None
 

@@ -6,7 +6,7 @@ import re
 import json
 from rdflib import Graph,namespace
 from rdflib.term import URIRef, Literal
-from rdflib.namespace import Namespace,NamespaceManager,RDF
+from rdflib.namespace import Namespace,NamespaceManager,RDF, RDFS
 from django.template.loader import render_to_string
 import mimeparse
 
@@ -24,7 +24,7 @@ RDFLIBFORMATS = {
     'application/json': 'jsonld' ,
     'application/rdf+xml': 'rdfxml' }
 
-
+ALTR_PROFILE,created = Profile.objects.get_or_create(token="all", uri=ALTR, defaults={ 'label': 'alternates using W3C model' , 'comment' : 'Implements the https://www.w3.org/TR/dx-prof-conneg/ standard alternates view of available profiles and media types.' } )
 
 def resolve_register_uri(request, registry_label,requested_extension):
     """
@@ -140,21 +140,21 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     else:
         uri= register_uri_base 
 
-    links,tokens = collate_alternates(rulechains)
+    links,tokens,labels,descs = collate_alternates(rulechains)
     
     response_body = None
     try:
         if profile_prefs == ALTR or request.GET['_profile'] == "all" :
-            matched_profile,created = Profile.objects.get_or_create(token="all", uri=ALTR)
+            matched_profile = ALTR_PROFILE
             try: 
                 content_type=request.GET['_mediatype']
             except:
                 content_type= mimeparse.best_match( RDFLIBFORMATS.keys() , clientaccept) 
             if content_type == 'text/html' :
                 # call templating to turn to HTMLmake_altr_graph
-                response_body= render_to_string('altr.html', {'links':links, 'uri':uri, 'tokens':tokens})
+                response_body= render_to_string('altr.html', {'links':links, 'uri':uri, 'tokens':tokens, 'labels':labels, 'descs':descs})
             else:
-                response_body = make_altr_graph (uri,links,tokens,RDFLIBFORMATS[content_type])
+                response_body = make_altr_graph (uri,links,tokens,labels,RDFLIBFORMATS[content_type])
     except Exception as e:
         print e
     
@@ -338,16 +338,21 @@ def collate_alternates(rulechains):
     """ Collate available representations 
     
     cachable collation of links and token mappings for a set of resolving rules that determine what resources are available.
+    Always add W3C canonical ALTR view
     """
-    links = {}
-    tokens = {}
+    links = { ALTR : RDFLIBFORMATS.keys() }
+    tokens = { ALTR: 'all'}
+    labels ={ ALTR: ALTR_PROFILE.label}
+    descs = {ALTR: ALTR_PROFILE.comment}
     for rc in rulechains:
         for rule in rc[1:]: 
             if rule.profile :
                 for prof in rule.profile.all():
                     links[prof.uri] = rule.extension_list()
                     tokens[prof.uri] = prof.token
-    return links,tokens
+                    labels[prof.uri] = prof.label if prof.label else prof.uri
+                    descs[prof.uri] = prof.comment
+    return links,tokens,labels,descs
 
     
 def makelinkheaders (uri,links,tokens,matched_profile,content_type):
@@ -360,7 +365,7 @@ def makelinkheaders (uri,links,tokens,matched_profile,content_type):
             proflinks.append( '<%s>; rel="%s"; type="%s"; profile="%s"' % ( uri, 'self' if isprof and ismedia else 'alternate', media_type, prof) )
     return proflinks
 
-def make_altr_graph (uri,links,tokens,content_type):
+def make_altr_graph (uri,links,tokens,labels,content_type):
     """ make a serialisation of the altR model for W3C list_profiles using content type requested """
     print content_type
     gr = Graph()
@@ -372,6 +377,7 @@ def make_altr_graph (uri,links,tokens,content_type):
         puri = URIRef(prof)
         rep = URIRef( "?_profile=".join((uri, tokens[prof])))
         gr.add( (id, ALTR_HASREPRESENTATION , rep) )
+        gr.add( (puri, RDFS.label , Literal(labels[prof])) )
         gr.add( (rep, DCT_CONFORMSTO , puri) )
         for media_type in links[prof]:
             gr.add( (rep, DCT_FORMAT , Literal( media_type)) )

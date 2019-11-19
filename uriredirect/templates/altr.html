@@ -3,16 +3,16 @@
    <h1>Availabel Alternate Representations</h1>
     <h2>Resource <a href="{{ uri }}">{{ uri }}</a></h2>
     <h4 style="float:center;">Alternate Representations</h4>
-    <table class="layout" border="2">
+    <table class="layout" border="2" spacing="10">
       <tr>
         <th>Profile</th>
-        <th>Short Name</th>
+        <th>Short Token</th>
         <th>Media Types</th>
       </tr>
     {% for prof,mediatypes in links.items %}
       {% for f in mediatypes %}
         <tr>
-          <td>{{ prof }}</td>
+          <td><a href="{{ prof }}">{{ labels|getdictval:prof }}</a></td>
           <td>{{ tokens|getdictval:prof }}</td>
           <td><a href="{{ uri }}?_profile={{ tokens|getdictval:prof }}&_mediatype={{ f }}">{{ f }}</a></td>
         </tr>

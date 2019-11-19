@@ -36,9 +36,21 @@ class Profile(models.Model):
         unique = True, help_text='a comma separated list of media-types with profiles such as "application/gml+xml; version=3.2" that match this profile. This is an extension point not yet used.'  
     )
     
-    uri = models.CharField(
+    uri = models.URLField(
         max_length=1000, 
         blank=False, null=False, verbose_name = 'Canonical URI',
+        help_text = 'The canonical URI of the profile - this is what an external system needs to check to determine what a token means'
+    )
+    
+    label = models.CharField(
+        max_length=100, 
+        blank=True, null=True, verbose_name = 'Display Label',
+        help_text = 'Display label for profile'
+    )
+    
+    comment = models.TextField(
+        max_length=1000, 
+        blank=True, null=True, verbose_name = 'Description',
         help_text = 'The canonical URI of the profile - this is what an external system needs to check to determine what a token means'
     )
     

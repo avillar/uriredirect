@@ -26,7 +26,7 @@ RDFLIBFORMATS = {
 
 try:
     ALTR_PROFILE,created = Profile.objects.get_or_create(token="all", uri=ALTR, defaults={ 'label': 'alternates using W3C model' , 'comment' : 'Implements the https://www.w3.org/TR/dx-prof-conneg/ standard alternates view of available profiles and media types.' } )
-catch:
+except:
     pass
     
     

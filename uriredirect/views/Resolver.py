@@ -24,11 +24,14 @@ RDFLIBFORMATS = {
     'application/json': 'jsonld' ,
     'application/rdf+xml': 'rdfxml' }
 
-try:
-    ALTR_PROFILE,created = Profile.objects.get_or_create(token="all", uri=ALTR, defaults={ 'label': 'alternates using W3C model' , 'comment' : 'Implements the https://www.w3.org/TR/dx-prof-conneg/ standard alternates view of available profiles and media types.' } )
-except:
-    pass
+ALTR_PROFILE = None
+
+def getALTR():
+    global ALTR_PROFILE
+    if not ALTR_PROFILE:
+        ALTR_PROFILE,created = Profile.objects.get_or_create(token="all", uri=ALTR, defaults={ 'label': 'alternates using W3C model' , 'comment' : 'Implements the https://www.w3.org/TR/dx-prof-conneg/ standard alternates view of available profiles and media types.' } )
     
+    return ALTR_PROFILE    
     
 def resolve_register_uri(request, registry_label,requested_extension):
     """
@@ -149,7 +152,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     response_body = None
     try:
         if profile_prefs == ALTR or request.GET['_profile'] == "all" :
-            matched_profile = ALTR_PROFILE
+            matched_profile = getALTR()
             try: 
                 content_type=request.GET['_mediatype']
             except:
@@ -346,8 +349,8 @@ def collate_alternates(rulechains):
     """
     links = { ALTR : RDFLIBFORMATS.keys() }
     tokens = { ALTR: 'all'}
-    labels ={ ALTR: ALTR_PROFILE.label}
-    descs = {ALTR: ALTR_PROFILE.comment}
+    labels ={ ALTR: getALTR().label}
+    descs = {ALTR: getALTR().comment}
     for rc in rulechains:
         for rule in rc[1:]: 
             if rule.profile :

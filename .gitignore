@@ -1,2 +1,4 @@
 *.pyc
 uriredirect.egg-info/
+*.backup
+uriredirect/migrations/

@@ -18,7 +18,20 @@ class RewriteRule(models.Model):
         verbose_name_plural = 'Rewrite Rules'
     
     objects = RewriteRuleManager()
-
+    root_rule_cached = "ResolveMe"
+    
+    def profile_list(self):
+        return ",".join(self.profile.values_list('token',flat=True))
+    
+    def root_rule(self):
+        if self.root_rule_cached == "ResolveMe" :
+            self.root_rule_cached = None
+            rule = self
+            while rule:
+                self.root_rule_cached = rule    
+                rule=rule.parent   
+        return self.root_rule_cached
+        
     def natural_key(self):
         return(self.label,)
     

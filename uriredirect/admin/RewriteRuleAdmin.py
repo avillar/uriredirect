@@ -27,7 +27,7 @@ class APIUsedFilter(admin.SimpleListFilter):
         return qs
 
 class APIPartFilter(admin.SimpleListFilter):
-    title='API (subrules)'
+    title='RewriteRule (API)'
     parameter_name = 'apiroot_id'
     
     def lookups(self, request, model_admin):
@@ -102,6 +102,105 @@ class RegisterRuleFilter(admin.SimpleListFilter):
         except:
             pass
         return qs 
+ 
+
+class RegisterAPIBinding(RewriteRule):
+    class Meta:
+        proxy = True
+        verbose_name = 'RewriteRule: Register/API binding'
+
+        
+class RegisterAPIBindingAdmin(admin.ModelAdmin):
+    """ Subset of rewrite rules binding APIs to registers """
+    save_as = True
+    model=RegisterAPIBinding
+    list_display = ('label',  'register', 'parent',)
+    list_filter = (APIUsedFilter,)
+    search_fields = ('label', 'pattern','parent')
+    # disabled because it is disallowing empty field!
+    # form = RewriteRuleAdminForm
+    fieldsets = [
+        ('Rule Metadata', {
+            'fields': ['label', 'description']
+        }),
+        ('API inheritance', {
+            'fields': ['parent']                 
+        }),
+        ('Namespace and service binding', {
+            'fields': ['register', 'service_location', 'service_params']                 
+        })
+        
+        
+    ]
+    
+    def get_queryset(self, request):
+        qs = super(RegisterAPIBindingAdmin, self).get_queryset(request)
+        return qs.filter(register__isnull=False,parent__isnull=False)
+ 
+class APIRootRule(RewriteRule):
+    class Meta:
+        proxy = True
+        verbose_name = 'RewriteRule: API base'
+        
+class APIRootRuleAdmin(admin.ModelAdmin):
+    save_as = True
+    model=APIRootRule
+    list_display = ('label', 'pattern', 'register')
+    #list_filter = (APIUsedFilter,)
+    search_fields = ('label', 'pattern','parent')
+    # disabled because it is disallowing empty field!
+    # form = RewriteRuleAdminForm
+    fieldsets = [
+        ('Rule Metadata', {
+            'fields': ['label', 'description']
+        }),
+        ('API inheritance', {
+            'fields': ['parent']                 
+        }),
+        ('Namespace and service binding', {
+            'fields': ['register', 'service_location', 'service_params']                 
+        }),
+        ('URI Pattern and query parameters', {
+            'fields': ['pattern', 'use_lda', 'profile', 'view_param','view_pattern']                 
+        })
+        
+    ]
+    inlines = [AcceptMappingInline]
+    def get_queryset(self, request):
+        qs = super(APIRootRuleAdmin, self).get_queryset(request)
+        return qs.filter(parent__isnull=True,register__isnull=True) 
+ 
+class APISubRule(RewriteRule):
+        
+    class Meta:
+        proxy = True
+        verbose_name = 'RewriteRule: API subrule'
+        
+class APISubRuleAdmin(admin.ModelAdmin):
+    save_as = True
+    model=APISubRule
+    list_display = ('label', 'parent','profile_list', 'view_pattern')
+    list_filter = (APIPartFilter,)
+    search_fields = ('label', 'pattern', )
+    # disabled because it is disallowing empty field!
+    # form = RewriteRuleAdminForm
+    fieldsets = [
+        ('Rule Metadata', {
+            'fields': ['label', 'description']
+        }),
+        ('API inheritance', {
+            'fields': ['parent']                 
+        }),
+        ('URI Pattern and query parameters', {
+            'fields': ['pattern', 'use_lda', 'profile', 'view_param','view_pattern']                 
+        })
+        
+    ]
+    inlines = [AcceptMappingInline]
+        
+    def get_queryset(self, request):
+        qs = super(APISubRuleAdmin, self).get_queryset(request)
+        return qs.filter(parent__isnull=False,register__isnull=True) 
         
 class RewriteRuleAdmin(admin.ModelAdmin):
     save_as = True
@@ -129,4 +228,7 @@ class RewriteRuleAdmin(admin.ModelAdmin):
     
     inlines = [AcceptMappingInline]
     
+    def get_queryset(self, request):
+        qs = super(RewriteRuleAdmin, self).get_queryset(request)
+        return qs.filter(parent__isnull=True,register__isnull=False)
     

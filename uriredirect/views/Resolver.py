@@ -17,6 +17,8 @@ ALTR_REPRESENTATION = URIRef( "#".join( (ALTR,'Representation')))
 DCT = Namespace("http://purl.org/dc/terms/")
 DCT_CONFORMSTO= URIRef("http://purl.org/dc/terms/conformsTo")
 DCT_FORMAT= URIRef("http://purl.org/dc/terms/format")
+PROF_TOKEN= URIRef("http://www.w3.org/ns/prof/token")
+
 RDFLIBFORMATS = { 
     'application/ld+json': 'json-ld' ,
     'text/html' :'html',
@@ -386,6 +388,8 @@ def make_altr_graph (uri,links,tokens,labels,content_type):
         gr.add( (id, ALTR_HASREPRESENTATION , rep) )
         gr.add( (puri, RDFS.label , Literal(labels[prof])) )
         gr.add( (rep, DCT_CONFORMSTO , puri) )
+        gr.add( (rep, RDF.type , ALTR_REPRESENTATION) )
+        gr.add( (rep, PROF_TOKEN , Literal(tokens[prof])) )
         for media_type in links[prof]:
             gr.add( (rep, DCT_FORMAT , Literal( media_type)) )
     return gr.serialize(format=content_type)

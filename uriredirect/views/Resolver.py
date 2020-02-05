@@ -51,6 +51,8 @@ def qordered_prefs(prefstring):
     qprofs= [x.strip() for x in prefstring.split(',')]
     profile_qs = {}
     for qprof in qprofs:
+        if (not qprof ) :
+            continue
         parts = [x.strip() for x in qprof.split(';')]
         prof = parts[0]
         if prof[0] == '<':
@@ -175,8 +177,8 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         substitutable_vars= None
         url=None
         
-        
-    proflinks = generate_links_for_profiles("/".join((register_uri_base.replace("http",request.scheme,1) ,requested_uri)), links, tokens, matched_profile, content_type)
+    #import pdb; pdb.set_trace()    
+    proflinks = generate_links_for_profiles("/".join(filter(None,(register_uri_base.replace("http",request.scheme,1) ,requested_uri))), links, tokens, matched_profile, content_type)
         
     # Perform the redirection if the resolver returns something, or a 404 instead
     if debug:

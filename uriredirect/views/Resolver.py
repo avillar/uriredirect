@@ -155,7 +155,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
     
     response_body = None
     try:
-        if profile_prefs == ALTR or request.GET['_profile'] == "alt" :
+        if ALTR in profile_prefs or request.GET['_profile'] == "alt" :           
             matched_profile = getALTR()
             try: 
                 content_type=request.GET['_mediatype']

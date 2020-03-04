@@ -95,7 +95,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         profile_prefs = qordered_prefs(request.META['HTTP_ACCEPT_PROFILE'])
             
     except:
-        profile_prefs = None
+        profile_prefs = []
         
     # Determine if this server is aware of the requested registry
     requested_register=None
@@ -352,7 +352,7 @@ def collate_alternates(rulechains):
     Always add W3C canonical ALTR view
     """
     links = { ALTR : RDFLIBFORMATS.keys() }
-    tokens = { ALTR: 'all'}
+    tokens = { ALTR: 'alt'}
     labels ={ ALTR: getALTR().label}
     descs = {ALTR: getALTR().comment}
     for rc in rulechains:

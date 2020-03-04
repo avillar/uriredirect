@@ -213,7 +213,7 @@ class RewriteRule(models.Model):
         elif accept:
             url_templates, content_type = self.content_negotiation(accept)
         else:
-            return None
+            return None,None
             
         if url_templates :
             return url_templates[0], content_type

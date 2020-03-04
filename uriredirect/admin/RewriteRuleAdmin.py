@@ -227,8 +227,8 @@ class RewriteRuleAdmin(admin.ModelAdmin):
     ]
     
     inlines = [AcceptMappingInline]
-    
-    def get_queryset(self, request):
+   
+    def get_queryset_notused(self, request):
         qs = super(RewriteRuleAdmin, self).get_queryset(request)
         return qs.filter(parent__isnull=True,register__isnull=False)
     

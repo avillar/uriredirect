@@ -233,6 +233,9 @@ class RewriteRule(models.Model):
                         url_template = re.sub('\$' + str(i + 1), match.group(i + 1), url_template)
                     else:
                         url_template = re.sub('\$' + str(i + 1), '', url_template)
+                for k in match.groupdict().keys():
+                    url_template = re.sub('\${' + k + '}', match.group(k) , url_template)
+                    
                     
         # environment variable matching
         varmatch = re.findall(u'\${(!?)(\w+)}', url_template)

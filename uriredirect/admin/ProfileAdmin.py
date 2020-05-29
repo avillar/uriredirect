@@ -10,7 +10,7 @@ class ProfileForm(forms.ModelForm):
         self.fields['profiles'].queryset = Profile.objects.exclude(token=self.instance.token).exclude(profilesTransitive__token=self.instance.token)
         
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('token', 'uri')
+    list_display = ('token', 'label','uri')
     form=ProfileForm
 
     def save_related(self,  request, form, formsets, change):

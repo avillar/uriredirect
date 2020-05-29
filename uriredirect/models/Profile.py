@@ -33,7 +33,7 @@ class Profile(models.Model):
     
     mediaprofs = models.CharField(
         max_length=1000, blank=True, null = True, 
-        unique = True, help_text='a comma separated list of media-types with profiles such as "application/gml+xml; version=3.2" that match this profile. This is an extension point not yet used.'  
+        unique = False, help_text='a comma separated list of media-types with profiles such as "application/gml+xml; version=3.2" that match this profile. This is an extension point not fpor documentation, but not yet used in validation - accept mappings must be provided.'  
     )
     
     uri = models.URLField(

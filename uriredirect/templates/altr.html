@@ -1,5 +1,10 @@
 {% load getdictval %}
 <HTML>
+<HEAD> 
+{% for css in stylesheets %}
+    <link rel="stylesheet" type="text/css" href="{{ css }}">
+{% endfor %}
+</HEAD>
 <BODY>
    <h1>Available Representations</h1>
     <h2>Resource <a href="{{ uri }}">{{ uri }}</a></h2>

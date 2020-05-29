@@ -102,12 +102,13 @@ class RegisterRuleFilter(admin.SimpleListFilter):
         except:
             pass
         return qs 
- 
 
+    
 class RegisterAPIBinding(RewriteRule):
     class Meta:
         proxy = True
         verbose_name = 'RewriteRule: Register/API binding'
+
 
         
 class RegisterAPIBindingAdmin(admin.ModelAdmin):
@@ -141,7 +142,21 @@ class APIRootRule(RewriteRule):
     class Meta:
         proxy = True
         verbose_name = 'RewriteRule: API base'
+
+class APISubRule(RewriteRule):
         
+    class Meta:
+        proxy = True
+        verbose_name = 'RewriteRule: API subrule'
+
+ 
+class SubRulesInline(admin.TabularInline):
+    model = APISubRule
+    fields = ('label','profile')
+    extra = 0
+    show_change_link = True
+ 
+ 
 class APIRootRuleAdmin(admin.ModelAdmin):
     save_as = True
     model=APIRootRule
@@ -154,9 +169,6 @@ class APIRootRuleAdmin(admin.ModelAdmin):
         ('Rule Metadata', {
             'fields': ['label', 'description']
         }),
-        ('API inheritance', {
-            'fields': ['parent']                 
-        }),
         ('Namespace and service binding', {
             'fields': ['register', 'service_location', 'service_params']                 
         }),
@@ -165,17 +177,13 @@ class APIRootRuleAdmin(admin.ModelAdmin):
         })
         
     ]
-    inlines = [AcceptMappingInline]
+    inlines = [AcceptMappingInline, SubRulesInline]
     def get_queryset(self, request):
+        #import pdb; pdb.set_trace()
         qs = super(APIRootRuleAdmin, self).get_queryset(request)
         return qs.filter(parent__isnull=True,register__isnull=True) 
  
-class APISubRule(RewriteRule):
-        
-    class Meta:
-        proxy = True
-        verbose_name = 'RewriteRule: API subrule'
-        
+   
 class APISubRuleAdmin(admin.ModelAdmin):
     save_as = True
     model=APISubRule

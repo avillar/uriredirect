@@ -163,7 +163,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
                 content_type= mimeparse.best_match( RDFLIBFORMATS.keys() , clientaccept) 
             if content_type == 'text/html' :
                 # call templating to turn to HTMLmake_altr_graph
-                response_body= render_to_string('altr.html', {'links':links, 'uri':uri, 'tokens':tokens, 'labels':labels, 'descs':descs})
+                response_body= render_to_string('altr.html', {'links':links, 'uri':uri, 'tokens':tokens, 'labels':labels, 'descs':descs , 'stylesheets': [] })
             else:
                 response_body = make_altr_graph (uri,links,tokens,labels,RDFLIBFORMATS[content_type])
     except Exception as e:

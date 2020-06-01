@@ -219,7 +219,8 @@ class RewriteRule(models.Model):
             return url_templates[0], content_type
         elif self.parent :
             return self.parent.get_url_template( requested_extension , accept )
-    
+        else:
+            return None,None
             
            
                 

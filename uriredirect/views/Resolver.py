@@ -167,7 +167,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             else:
                 response_body = make_altr_graph (uri,links,tokens,labels,RDFLIBFORMATS[content_type])
     except Exception as e:
-        print e
+        pass
     
     if not response_body:     
         # now to resolve redirect we need to find subset of rules matching viewname, and other query param constraints
@@ -208,8 +208,12 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
     # note will ignore accept header and allow override format/lang in conneg if LDA convention in use
        
     for rulechain in rulechains :
+        if rule:
+            break
         binding = rulechain[0] 
         for patrule in rulechain[1:] :
+            if rule:
+                break
             (use_lda, ignore) = patrule.get_prop_from_tree('use_lda')
             if use_lda :
                 try:
@@ -288,21 +292,19 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                                 except:
                                     matched_profile = None
                             if matched_profile :
-                                print "found token matching profile %s " % (p,)
                                 url_template,content_type = patrule.get_url_template(requested_extension, accept)
                                 if url_template :
                                     rule = patrule
                                     matched_profile=p
                                     break
-                        if matched_profile:
+                        if rule:
                             break
                                     
             elif not rule :  # if no specific query set, then set - otherwise respect any match made by the more specific rule
                 url_template,content_type = binding.get_url_template(requested_extension, accept)
                 if url_template :
                     rule = patrule
-        if rule :
-            break
+
  
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
@@ -378,7 +380,6 @@ def makelinkheaders (uri,links,tokens,matched_profile,content_type):
 
 def make_altr_graph (uri,links,tokens,labels,content_type):
     """ make a serialisation of the altR model for W3C list_profiles using content type requested """
-    print content_type
     gr = Graph()
     nsgr = NamespaceManager(gr)
     nsgr.bind("altr", ALTRNS)

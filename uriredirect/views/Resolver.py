@@ -187,6 +187,8 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
         response = HttpResponse(response_body,content_type=content_type) 
     elif url:
         response =  HttpResponseSeeOther(url)
+    elif exception:
+        response = HttpResponseNotFound(exception)
     else:
         response = HttpResponseNotFound('The requested URI did not return any document')
 
@@ -316,7 +318,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
         } 
         
     if not rule :
-        response = HttpResponseNotFound('A profile for the requested URI base exists but no rules match for the requested format')
+        exception = 'A profile for the requested URI base exists but no rules match for the requested format'
         url=None
     else:
         # print url_template 

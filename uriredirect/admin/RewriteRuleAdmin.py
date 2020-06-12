@@ -155,9 +155,20 @@ class SubRulesInline(admin.TabularInline):
     fields = ('label','profile')
     extra = 0
     show_change_link = True
- 
+
+class RulePatternsAdminForm(forms.ModelForm):
+    def clean(self):
+        cleaned_data = super(RulePatternsAdminForm, self).clean()
+
+        if not (bool(self.cleaned_data['view_pattern']) !=
+                bool(self.cleaned_data['profile'])):
+            raise forms.ValidationError, 'Do not define both a profile and string matching pattern - the profile token will be used.'
+
+        return cleaned_data
+        
  
 class APIRootRuleAdmin(admin.ModelAdmin):
+    form=RulePatternsAdminForm
     save_as = True
     model=APIRootRule
     list_display = ('label', 'pattern', 'register')
@@ -185,6 +196,7 @@ class APIRootRuleAdmin(admin.ModelAdmin):
  
    
 class APISubRuleAdmin(admin.ModelAdmin):
+    form=RulePatternsAdminForm
     save_as = True
     model=APISubRule
     list_display = ('label', 'parent','profile_list', 'view_pattern')
@@ -211,6 +223,7 @@ class APISubRuleAdmin(admin.ModelAdmin):
         return qs.filter(parent__isnull=False,register__isnull=True) 
         
 class RewriteRuleAdmin(admin.ModelAdmin):
+    form=RulePatternsAdminForm
     save_as = True
     list_display = ('label', 'pattern', 'register')
     list_filter = (ProfileFilter,RegisterFilter, ServerFilter, RegisterRuleFilter, APIUsedFilter, APIPartFilter)

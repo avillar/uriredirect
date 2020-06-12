@@ -103,7 +103,7 @@ class RewriteRule(models.Model):
         max_length=500, 
         blank = True,
         null = True,
-        help_text='Optional - if set then use regex patterns for matching param values, rather than a speicfic registered profile token.'
+        help_text='Optional - if set then use regex patterns for matching param values, rather than a specific registered profile token.'
     )
  
     representations = models.ManyToManyField(

@@ -310,7 +310,9 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
  
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
-        'server' : binding.service_location.replace("http",request.scheme,1) if binding.service_location else '' ,
+        'server' : binding.service_location.replace("http:",request.scheme+":",1) if binding.service_location else '' ,
+        'server_http' : binding.service_location.replace("https:","http:",1) if binding.service_location else '' ,
+        'server_https' : binding.service_location.replace("http:","https:",1) if binding.service_location else '' ,
         'path' : requested_uri, 
         'register_name' : registry_label,
         'register' : requested_register.url.replace("http",request.scheme,1),

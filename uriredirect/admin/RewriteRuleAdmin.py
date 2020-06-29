@@ -11,6 +11,11 @@ class RewriteRuleAdminForm(forms.ModelForm):
     pattern = forms.CharField(widget=forms.TextInput(attrs={'size':200}))
     service_location = forms.CharField(widget=forms.TextInput(attrs={'size':200}))
 
+class AcceptMappingAdmin(admin.ModelAdmin):
+    list_display = ( 'media_type', 'rewrite_rule', 'redirect_to')
+    search_fields = ( 'media_type', 'redirect_to' )
+    list_filter = ('rewrite_rule',)
+
 class APIUsedFilter(admin.SimpleListFilter):
     title='API (Register bound)'
     parameter_name = 'api_id'

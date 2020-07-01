@@ -16,10 +16,10 @@ class AcceptMapping(models.Model):
     def natural_key(self):
         return(self.rewrite_rule, self.media_type)
         
-    rewrite_rule = models.ForeignKey('RewriteRule')
+    rewrite_rule = models.ForeignKey('RewriteRule',on_delete=models.CASCADE)
     media_type = models.ForeignKey(
         'MediaType',
-        verbose_name = 'Media Type'
+        verbose_name = 'Media Type' , on_delete=models.CASCADE
     )
     redirect_to = models.CharField(
         max_length=2000,

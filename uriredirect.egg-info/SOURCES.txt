@@ -10,6 +10,7 @@ uriredirect.egg-info/not-zip-safe
 uriredirect.egg-info/requires.txt
 uriredirect.egg-info/top_level.txt
 uriredirect/admin/AcceptMappingInline.py
+uriredirect/admin/ProfileAdmin.py
 uriredirect/admin/RewriteRuleAdmin.py
 uriredirect/admin/__init__.py
 uriredirect/http/HttpResponseNotAcceptable.py
@@ -18,6 +19,7 @@ uriredirect/http/HttpResponseSeeOther.py
 uriredirect/http/__init__.py
 uriredirect/models/AcceptMapping.py
 uriredirect/models/MediaType.py
+uriredirect/models/Profile.py
 uriredirect/models/RewriteRule.py
 uriredirect/models/UriRegister.py
 uriredirect/models/__init__.py

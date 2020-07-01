@@ -1,7 +1,10 @@
 from django.db import models
-from AcceptMapping import AcceptMapping
+from .AcceptMapping import AcceptMapping
 import mimeparse, re
-from urllib import quote_plus
+try:
+    from urllib.parse import quote_plus
+except:
+    from urllib import quote_plus
 try:
     from django.apps  import apps
 except:
@@ -46,6 +49,7 @@ class RewriteRule(models.Model):
         'UriRegister',
         null = True,
         blank = True,
+        on_delete=models.SET_NULL,
         help_text='The URI register this rule is applied to. If the rule is a reusable API definition leave this unset'                             
     )
     
@@ -53,7 +57,8 @@ class RewriteRule(models.Model):
         'RewriteRule',
         help_text='The parent this rule extends - typically a API definition',
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )    
     
     service_location = models.URLField(
@@ -89,7 +94,6 @@ class RewriteRule(models.Model):
     )
     
     profile = models.ManyToManyField("Profile", blank=True, 
-        null = True,
         help_text='profiles to match - either tokens matching view_param or as URIs in HTTP Accept-Profile headers. (NB supplied params override HTTP)' 
     )
     

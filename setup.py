@@ -28,7 +28,7 @@ setup(
                 'uriredirect.views',
                 ],
     include_package_data = True,
-    author = 'Rob Atkinson','Ryan Clark'
+    author = ['Rob Atkinson','Ryan Clark',],
     zip_safe = False,
     install_requires = ['mimeparse', 
                         'rdflib>=4.0',

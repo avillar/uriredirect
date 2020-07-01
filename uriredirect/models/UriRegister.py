@@ -1,5 +1,5 @@
 from django.db import models
-from RewriteRule import RewriteRule
+from .RewriteRule import RewriteRule
 import re
 
 

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from AcceptMappingInline import AcceptMappingInline
+from .AcceptMappingInline import AcceptMappingInline
 from django import forms
 from uriredirect.models import *
 from django.db.models import Q
@@ -44,7 +44,7 @@ class APIPartFilter(admin.SimpleListFilter):
             api_id = request.GET['apiroot_id'] 
             qs= qs.filter(Q(parent__id=api_id) | Q(parent__parent__id=api_id), register__isnull=True)
         except Exception as e:
-            print e
+            print (e)
             pass
         return qs
         
@@ -167,7 +167,7 @@ class RulePatternsAdminForm(forms.ModelForm):
 
         if not (bool(self.cleaned_data['view_pattern']) !=
                 bool(self.cleaned_data['profile'])):
-            raise forms.ValidationError, 'Do not define both a profile and string matching pattern - the profile token will be used.'
+            raise forms.ValidationError( 'Do not define both a profile and string matching pattern - the profile token will be used.')
 
         return cleaned_data
         

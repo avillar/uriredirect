@@ -74,6 +74,9 @@ When generating a rewrite rule, there are two things to keep in mind:
 
 This is simply the correlation table that handles the many-to-many relationship between rewrite rules and media types.
 
+### Profiles
+This object maps short profile names to canonical URIs for these profiles to support both HTTP and QSA arguments for the W3C Content-negotiation-by-profile specification.
+
 ## At a high-level, how does it work?
 1. An incoming URI request reaches the server and is handled by the `resolve_uri` function defined in *views/Resolver.py*.
 2. If the request URI looks like this `http://{your server name}/{something}/{some more stuff}/`, then `{something}` is treated as the label for a particular URI register.
@@ -103,8 +106,8 @@ This is simply the correlation table that handles the many-to-many relationship 
 - *other files not really worth mentioning*
 
 ## Prerequisites
-- A functioning Django environment.
-- The [mimeparse](http://code.google.com/p/mimeparse/) Python module. Simple installation: `easy_install mimeparse`
+- A functioning Django environment. (originally tested under Django 1.11 and python 2.7 - this is now python-2-legacy branch) . Current testing under python 3.8 and django 3.06.
+- The [python-mimeparse] (http://code.google.com/p/mimeparse/) and rdflib Python modules - set setup.py for full list.  
 
 ## Installation
 - Clone this repository to a location on your python-path or to the right place within [the layout of your Django project](https://docs.djangoproject.com/en/dev/releases/1.4/#updated-default-project-layout-and-manage-py).
@@ -112,4 +115,10 @@ This is simply the correlation table that handles the many-to-many relationship 
 - Add a URL to your project's `urls.py` file that will send requested traffic to the app. Think about this. If...
 	- You want to resolve URIs in a structure like `http://{domain name}/{register}/{identifier}/`, then you'll need the application exposed at the server's root level, something like `url(r'^', include('uriredirect.urls'))`.
 	- You want to resolve URIs in a structure like `http://{domain name}/{some fixed value}/{register}/{identifier}/`, then you'll use something like `url(r'^{that fixed value}/', include('uriredirect.urls'))`.
-- Run `manage.py syncdb`.
+- Run `manage.py makemigrations; manage.py migrate`.
+
+## Management
+The admin form allows rewrite rules to be grouped by different modes - whether they form a reusable API or are bound to a particular path roor (uriregister), and whether they are sub-rules overiding an API default ruleset.
+
+It is recommended that complex rule sets are managed as fixtures. django-smuggler can be used to provide a load and backup mechanism.
+

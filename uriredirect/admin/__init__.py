@@ -1,7 +1,11 @@
+from __future__ import absolute_import
 from django.contrib import admin
-from RewriteRuleAdmin import *
-from ProfileAdmin import ProfileAdmin
-from uriredirect.models import RewriteRule, MediaType, UriRegister, Profile
+from .RewriteRuleAdmin import *
+from .ProfileAdmin import ProfileAdmin
+try:
+    from uriredirect.models import *
+except:
+    from uriredirect.models import RewriteRule, MediaType, UriRegister, Profile
 
 admin.site.register(RewriteRule, RewriteRuleAdmin)
 admin.site.register(RegisterAPIBinding, RegisterAPIBindingAdmin)

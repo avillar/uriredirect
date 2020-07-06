@@ -27,3 +27,6 @@ class MediaType(models.Model):
         
     def __unicode__(self):
         return self.mime_type
+        
+    def __str__(self):
+        return str(self.mime_type)

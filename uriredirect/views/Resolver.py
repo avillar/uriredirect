@@ -8,7 +8,7 @@ from rdflib import Graph,namespace
 from rdflib.term import URIRef, Literal
 from rdflib.namespace import Namespace,NamespaceManager,RDF, RDFS
 from django.template.loader import render_to_string
-import mimeparse
+from mimeparse  import best_match
 
 ALTR="http://www.w3.org/ns/dx/conneg/altr"
 ALTRNS = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
@@ -35,13 +35,13 @@ def getALTR():
     
     return ALTR_PROFILE    
     
-def resolve_register_uri(request, registry_label,requested_extension):
+def resolve_register_uri(request, registry_label,requested_extension=None):
     """
         resolve a request to the register itself - just another URI
     """
     return resolve_uri(request, registry_label, None, requested_extension )
     
-def resolve_registerslash_uri(request, registry_label,requested_extension):
+def resolve_registerslash_uri(request, registry_label,requested_extension=None):
     """
         resolve a request to the register itself - with a trailing slash
     """
@@ -65,7 +65,7 @@ def qordered_prefs(prefstring):
     return sorted( profile_qs, key=profile_qs.get )    
         
         
-def resolve_uri(request, registry_label, requested_uri, requested_extension):
+def resolve_uri(request, registry_label, requested_uri, requested_extension=None):
     if request.META['REQUEST_METHOD'] == 'GET':
         req=request.GET
         head=False
@@ -160,13 +160,14 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension):
             try: 
                 content_type=request.GET['_mediatype']
             except:
-                content_type= mimeparse.best_match( RDFLIBFORMATS.keys() , clientaccept) 
+                content_type= best_match( RDFLIBFORMATS.keys() , clientaccept) 
             if content_type == 'text/html' :
                 # call templating to turn to HTMLmake_altr_graph
                 response_body= render_to_string('altr.html', {'links':links, 'uri':uri, 'tokens':tokens, 'labels':labels, 'descs':descs , 'stylesheets': [] })
             else:
                 response_body = make_altr_graph (uri,links,tokens,labels,RDFLIBFORMATS[content_type])
     except Exception as e:
+        print (e)
         pass
     
     if not response_body:     

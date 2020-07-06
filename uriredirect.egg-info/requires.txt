@@ -1,1 +1,4 @@
 mimeparse
+rdflib>=4.0
+rdflib-jsonld
+requests

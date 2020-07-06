@@ -28,3 +28,7 @@ class AcceptMapping(models.Model):
     
     def __unicode__(self):
         return self.media_type.mime_type
+        
+                
+    def __str__(self):
+        return str(self.media_type.mime_type)

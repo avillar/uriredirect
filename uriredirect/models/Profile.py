@@ -69,6 +69,9 @@ class Profile(models.Model):
         
     def __unicode__(self):
         return self.token
+                
+    def __str__(self):
+        return str(self.token)
         
 
 

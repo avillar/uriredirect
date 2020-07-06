@@ -33,7 +33,10 @@ class UriRegister(models.Model):
     
     def __unicode__(self):
         return self.label
-    
+            
+    def __str__(self):
+        return str(self.label)
+        
     def find_matching_rules(self, requested_uri):
         """
             returns a list of rules that are bound to this URI register. - these may inherited, and have inheriting sub-rules that will need ot be accessed

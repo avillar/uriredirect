@@ -30,7 +30,7 @@ setup(
     include_package_data = True,
     author = ['Rob Atkinson','Ryan Clark',],
     zip_safe = False,
-    install_requires = ['mimeparse', 
+    install_requires = ['python-mimeparse', 
                         'rdflib>=4.0',
                         'rdflib-jsonld',
                         'requests' ],

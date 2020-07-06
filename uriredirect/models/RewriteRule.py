@@ -1,6 +1,9 @@
 from django.db import models
 from .AcceptMapping import AcceptMapping
-import mimeparse, re
+import  re
+
+from mimeparse  import best_match
+
 try:
     from urllib.parse import quote_plus
 except:
@@ -124,6 +127,9 @@ class RewriteRule(models.Model):
         
     def __unicode__(self):
         return self.label
+        
+    def __str__(self):
+        return str(self.label)
     
     def extension_match(self, requested_extension): 
         if '/' in requested_extension :
@@ -202,7 +208,7 @@ class RewriteRule(models.Model):
             self.available_mime_types = [ media.mime_type for media in self.representations.all() ]
         if len(self.available_mime_types) == 0: return [], ''
         
-        matching_content_type = mimeparse.best_match(self.available_mime_types, accept)
+        matching_content_type = best_match(self.available_mime_types, accept)
         accept_mappings = AcceptMapping.objects.filter(
             rewrite_rule = self,
             media_type__mime_type = matching_content_type

@@ -1,12 +1,10 @@
+{% extends page_template  %}
 {% load getdictval %}
-<HTML>
-<HEAD> 
-{% for css in stylesheets %}
-    <link rel="stylesheet" type="text/css" href="{{ css }}">
-{% endfor %}
-</HEAD>
-<BODY>
-   <h1>Available Representations</h1>
+
+{% block title %}Alts:  {{ uri }} {% endblock %}
+
+{% block content %}
+
     <h2>Resource <a href="{{ uri }}">{{ uri }}</a></h2>
     <h4 style="float:center;">Alternate Representations</h4>
     <table class="layout" border="2" spacing="10">
@@ -25,5 +23,5 @@
       {% endfor %}
     {% endfor %}
     </table>
-</BODY>
-</HTML>
+{% endblock %} 
+ 

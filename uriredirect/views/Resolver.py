@@ -90,6 +90,11 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
             debug=True
     except: pass
     
+    try:
+        requested_uri.replace('http', request.headers[X-Forwarded-Proto],1)
+    except:
+        pass
+        
     clientaccept = request.META.get('HTTP_ACCEPT', '*')
     
     try:

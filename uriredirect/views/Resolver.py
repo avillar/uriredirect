@@ -91,7 +91,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
     except: pass
     
     try:
-        requested_uri.replace('http', request.headers['X-Forwarded-Proto'],1)
+        requested_uri.replace('http:', request.headers['X-Forwarded-Proto'] + ":",1)
     except:
         pass
         

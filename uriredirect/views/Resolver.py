@@ -129,13 +129,18 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
     
     if requested_register:
         rulechains = requested_register.find_matching_rules(requested_uri)
-    if not requested_register or len(rulechains) == 0:
+    if default_register and (not requested_register or len(rulechains) == 0) :
         if requested_register and registry_label:
             # register but no rules, so havent joined yest 
             requested_uri = "/".join( (registry_label, "" if requested_uri == '/' else requested_uri )) if requested_uri else registry_label
         rulechains = default_register.find_matching_rules(requested_uri) 
         requested_register= default_register
-        if len(rulechains) == 0:
+    else:
+        rulechains = []
+    if len(rulechains) == 0:
+        if debug:
+            return HttpResponse("Debug mode: Not register found with matching rules. \n Headers %s\n" % (  request.headers, ),content_type="text/plain") 
+        else:
             return HttpResponseNotFound('The requested URI does not match any resource - no rules found for URI base')
  
     # at this point we have all the URIs that match the base URI - thats enough to list the available profiles for the base resource
@@ -189,7 +194,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
         
     # Perform the redirection if the resolver returns something, or a 404 instead
     if debug:
-        response = HttpResponse("Debug mode: rule matched (%s , %s) generated %s \n\n template variables available: \n %s \n\n Link: \n\t%s\n\n Body \n%s" % ( rule, content_type, url, json.dumps(substitutable_vars , indent = 4),'\n\t'.join( proflinks.split(',')), response_body ),content_type="text/plain")
+        response = HttpResponse("Debug mode: rule matched (%s , %s) generated %s \n\n template variables available: \n %s \n\n Link: \n\t%s\n\n Body \n%s \nHeaders %s\n" % ( rule, content_type, url, json.dumps(substitutable_vars , indent = 4),'\n\t'.join( proflinks.split(',')), response_body, request.headers ),content_type="text/plain")
     elif response_body:
         response = HttpResponse(response_body,content_type=content_type) 
     elif url:

@@ -91,7 +91,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
     except: pass
     
     try:
-        requested_uri.replace('http', request.headers[X-Forwarded-Proto],1)
+        requested_uri.replace('http', request.headers['X-Forwarded-Proto'],1)
     except:
         pass
         
@@ -131,7 +131,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
     # we need to find this anyway (unless we have cached it in some future enhancement - as we need to be able to spit out the alternates view
     # based on the matching rules even if we are not trying to then match a rule to the conneg parameters
     #
-    
+    rulechains = []
     if requested_register:
         rulechains = requested_register.find_matching_rules(requested_uri)
     if default_register and (not requested_register or len(rulechains) == 0) :
@@ -140,8 +140,6 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
             requested_uri = "/".join( (registry_label, "" if requested_uri == '/' else requested_uri )) if requested_uri else registry_label
         rulechains = default_register.find_matching_rules(requested_uri) 
         requested_register= default_register
-    else:
-        rulechains = []
     if len(rulechains) == 0:
         if debug:
             return HttpResponse("Debug mode: Not register found with matching rules. \n Headers %s\n" % (  request.headers, ),content_type="text/plain") 

@@ -14,13 +14,14 @@
         <th>Media Types</th>
       </tr>
     {% for prof,mediatypes in links.items %}
-      {% for f in mediatypes %}
-        <tr>
-          <td><a href="{{ prof }}">{{ labels|getdictval:prof }}</a></td>
-          <td>{{ tokens|getdictval:prof }}</td>
-          <td><a href="{{ uri }}?_profile={{ tokens|getdictval:prof|urlencode }}&_mediatype={{ f|urlencode }}">{{ f }}</a></td>
-        </tr>
+      <tr>
+      <td><a href="{{ prof }}">{{ labels|getdictval:prof }}</a></td>
+      <td>{{ tokens|getdictval:prof }}</td><td>
+      {% for f in mediatypes %} 
+          <li><a href="{{ uri }}?_profile={{ tokens|getdictval:prof|urlencode }}&_mediatype={{ f|urlencode }}">{{ f }}</a></li>
       {% endfor %}
+      </td>
+        </tr>
     {% endfor %}
     </table>
 {% endblock %} 

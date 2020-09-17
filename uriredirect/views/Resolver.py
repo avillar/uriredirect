@@ -213,7 +213,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
         for p in matched_profile.profilesTransitive.values_list('uri'):
             mps += ",<%s>" % p
         response.setdefault("Content-Profile", mps)
-        
+    response.setdefault('Access-Control-Allow-Origin', '*' )
     response.setdefault("Link",proflinks)    
     return response
 

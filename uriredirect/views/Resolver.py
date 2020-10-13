@@ -263,9 +263,10 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                     viewpats = re.split(',|;',matchpatterns)
                     for viewpat in viewpats :                      
                         if ((viewpat == "") and not requested_view) or ( requested_view and re.match(requested_view,viewpat)):
-                            url_template,content_type = patrule.get_url_template(requested_extension, accept)
+                            url_template,content_type,default_profile = patrule.get_url_template(requested_extension, accept)
                             if url_template :
-                                rule = patrule 
+                                rule = patrule
+                                matched_profile = default_profile
                             break
                     
                     if rule:
@@ -292,7 +293,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                                             matched_profile = p
                                    
                                 if matched_profile :
-                                    url_template,content_type = patrule.get_url_template(requested_extension, accept)
+                                    url_template,content_type,default_profile = patrule.get_url_template(requested_extension, accept)
                                     if url_template :
                                         rule = patrule
                                         break;
@@ -309,7 +310,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                                 except:
                                     matched_profile = None
                             if matched_profile :
-                                url_template,content_type = patrule.get_url_template(requested_extension, accept)
+                                url_template,content_type,default_profile = patrule.get_url_template(requested_extension, accept)
                                 if url_template :
                                     rule = patrule
                                     matched_profile=p
@@ -390,6 +391,8 @@ def collate_alternates(rulechains):
 def makelinkheaders (uri,links,tokens,matched_profile,content_type):
     """ make a serialisation of available profiles in Link Header syntax """
     proflinks= []
+    if matched_profile:
+        proflinks = ['<%s>; rel="profile"' % matched_profile.uri]
     for prof in links.keys():
         isprof = matched_profile and matched_profile.uri == prof
         for media_type in links[prof]:

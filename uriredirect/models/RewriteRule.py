@@ -92,8 +92,8 @@ class RewriteRule(models.Model):
 
     use_lda = models.BooleanField(
         default=True,
-        verbose_name='Use Conneg-by-application profile and LDA standard params',
-        help_text='Use either conneg-by-ap {_mediatype} or LDA parameters (_format,_lang) to control other non-profile aspects of content negotiation'
+        verbose_name='Use Conneg-by-application profile standard params',
+        help_text='Use conneg-by-ap {_mediatype} to control other non-profile aspects of content negotiation'
     )
     
     profile = models.ManyToManyField("Profile", blank=True, 
@@ -144,9 +144,9 @@ class RewriteRule(models.Model):
             )
         
         if len(accept_mappings) == 0:
-            return [], ''
+            return [], '', None
         else:
-            return [ mapping.redirect_to for mapping in accept_mappings ], accept_mappings[0].media_type.mime_type
+            return [ mapping.redirect_to for mapping in accept_mappings ], accept_mappings[0].media_type.mime_type, accept_mappings[0].profile
     
     def extension_list(self):        
         return list(self.representations.values_list("mime_type",flat=True))
@@ -213,24 +213,29 @@ class RewriteRule(models.Model):
             rewrite_rule = self,
             media_type__mime_type = matching_content_type
         )
-        return [ mapping.redirect_to for mapping in accept_mappings ], matching_content_type
+        default_profile = None
+        if accept_mappings:
+            default_profile= accept_mappings[0].profile
+        return [ mapping.redirect_to for mapping in accept_mappings ], matching_content_type, default_profile
     
     
     def get_url_template(self, requested_extension , accept ) :
+        """ find matching accept and return URL template, content type and any bound default profile to report  """
         # If given a file extension, that should be checked first
+        default_profile = None
         if requested_extension != None:
-            url_templates, content_type = self.extension_match(requested_extension)
+            url_templates, content_type ,default_profile = self.extension_match(requested_extension)
         elif accept:
-            url_templates, content_type = self.content_negotiation(accept)
+            url_templates, content_type, default_profile = self.content_negotiation(accept)
         else:
-            return None,None
+            return None,None,None
             
         if url_templates :
-            return url_templates[0], content_type
+            return url_templates[0], content_type, default_profile
         elif self.parent :
             return self.parent.get_url_template( requested_extension , accept )
         else:
-            return None,None
+            return None,None,None
             
            
                 

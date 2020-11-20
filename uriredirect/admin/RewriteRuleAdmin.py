@@ -165,9 +165,9 @@ class RulePatternsAdminForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(RulePatternsAdminForm, self).clean()
 
-        if not (bool(self.cleaned_data['view_pattern']) !=
-                bool(self.cleaned_data['profile'])):
-            raise forms.ValidationError( 'Do not define both a profile and string matching pattern - the profile token will be used.')
+        #if not (bool(self.cleaned_data['view_pattern']) !=
+        #        bool(self.cleaned_data['profile'])):
+        #    raise forms.ValidationError( 'Do not define both a profile and string matching pattern - the profile token will be used.')
 
         return cleaned_data
         

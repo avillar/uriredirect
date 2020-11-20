@@ -319,7 +319,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                             break
                                     
             elif not rule :  # if no specific query set, then set - otherwise respect any match made by the more specific rule
-                url_template,content_type = binding.get_url_template(requested_extension, accept)
+                url_template,content_type,profile = binding.get_url_template(requested_extension, accept)
                 if url_template :
                     rule = patrule
 

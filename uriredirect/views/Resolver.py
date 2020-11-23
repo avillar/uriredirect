@@ -36,7 +36,7 @@ def getALTR():
     
     return ALTR_PROFILE    
     
-def resolve_register_uri(request, registry_label,requested_extension=None):
+def resolve_register_uri(request, registry_label=None,requested_extension=None):
     """
         resolve a request to the register itself - just another URI
     """

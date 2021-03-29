@@ -17,7 +17,7 @@ class AcceptMapping(models.Model):
         return(self.rewrite_rule, self.media_type)
         
     rewrite_rule = models.ForeignKey('RewriteRule',on_delete=models.CASCADE)
-    profile = models.ForeignKey('Profile',null=True, on_delete=models.SET_NULL , help_text='The profile to report if used as a default' )
+    profile = models.ForeignKey('Profile',null=True, blank=True, on_delete=models.SET_NULL , help_text='The profile to report if used as a default' )
     media_type = models.ForeignKey(
         'MediaType',
         verbose_name = 'Media Type' , on_delete=models.CASCADE

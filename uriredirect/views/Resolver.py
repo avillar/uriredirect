@@ -392,7 +392,7 @@ def makelinkheaders (uri,links,tokens,matched_profile,content_type):
     """ make a serialisation of available profiles in Link Header syntax """
     proflinks= []
     if matched_profile:
-        proflinks = ['<%s>; rel="profile ; anchor=<%s>' % (matched_profile.uri, uri)]
+        proflinks = ['<%s>; rel="profile" ; anchor=<%s>' % (matched_profile.uri, uri)]
     for prof in links.keys():
         isprof = matched_profile and matched_profile.uri == prof
         for media_type in links[prof]:

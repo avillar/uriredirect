@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .AcceptMappingInline import AcceptMappingInline
 from django import forms
-#from uriredirect.models import *
+from uriredirect.models import *
 from django.db.models import Q
 
 class ProfileForm(forms.ModelForm):

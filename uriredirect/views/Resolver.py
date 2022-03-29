@@ -354,7 +354,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
         else:
             vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
         
-        vars.update( { 'uris' : vars['uri]'].replace('http:','https:',1)  })
+        # vars.update( { 'uris' : vars['uri]'].replace('http:','https:',1)  })
 
         # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
         url = rule.resolve_url_template(requested_uri, url_template, vars, request  )

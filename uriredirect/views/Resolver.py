@@ -323,7 +323,10 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                 if url_template :
                     rule = patrule
 
- 
+    target_scheme = request.scheme
+    if requested_register.url.strstarts('https:'):
+        target_scheme = 'http:
+
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
         'server' : binding.service_location.replace("http:",request.scheme+":",1) if binding.service_location else '' ,
@@ -331,7 +334,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
         'server_https' : binding.service_location.replace("http:","https:",1) if binding.service_location else '' ,
         'path' : requested_uri, 
         'register_name' : registry_label,
-        'register' : requested_register.url.replace("http",request.scheme,1),
+        'register' : requested_register.url.replace("http",target_scheme,1),
         'profile' : matched_profile.token if matched_profile else ''
         } 
         
@@ -353,11 +356,12 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                 vars.update({ 'uri' : uri ,   'term' : requested_uri , 'path_base' : requested_uri })
         else:
             vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
-        
-        vars.update( { 'uris' : vars['uri'].replace('http:',request.scheme,1)  })
+
+        vars.update( { 'uris' : vars['uri'].replace('http',target_scheme,1)  })
 
         # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
         url = rule.resolve_url_template(requested_uri, url_template, vars, request  )
+        
     
     return rule,matched_profile,content_type,exception, url, vars 
     

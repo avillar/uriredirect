@@ -325,7 +325,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
 
     target_scheme = request.scheme
     if 'w3id.org' in requested_register.url :
-        target_scheme = 'http:'
+        target_scheme = 'https'
 
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,

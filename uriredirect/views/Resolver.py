@@ -325,7 +325,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
 
     target_scheme = request.scheme
     if requested_register.url.strstarts('https:'):
-        target_scheme = 'http:
+        target_scheme = 'http:'
 
     vars = { 
         'uri_base' : "://".join((request.scheme,request.get_host())) ,
@@ -361,7 +361,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
 
         # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
         url = rule.resolve_url_template(requested_uri, url_template, vars, request  )
-        
+
     
     return rule,matched_profile,content_type,exception, url, vars 
     

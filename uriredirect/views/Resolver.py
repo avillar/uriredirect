@@ -324,7 +324,7 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                     rule = patrule
 
     target_scheme = request.scheme
-    if requested_register.url.strstarts('https:'):
+    if 'w3id.org' in requested_register.url :
         target_scheme = 'http:'
 
     vars = { 

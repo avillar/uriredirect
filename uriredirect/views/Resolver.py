@@ -1,6 +1,6 @@
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseServerError, HttpResponsePermanentRedirect, HttpResponseNotAllowed
 from django.core.exceptions import ObjectDoesNotExist
-from uriredirect.models import UriRegister,Profile
+from uriredirect.models import UriRegister,Profile , RewriteRule
 from uriredirect.http import HttpResponseNotAcceptable, HttpResponseSeeOther
 import re
 import json
@@ -160,7 +160,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
     else:
         uri= register_uri_base 
 
-    links,tokens,labels,descs = collate_alternates(rulechains)
+    links,tokens,labels,descs,parents = collate_alternates(rulechains)
     
     response_body = None
     try:
@@ -218,7 +218,7 @@ def resolve_uri(request, registry_label, requested_uri, requested_extension=None
     return response
 
 def match_rule( request, uri, rulechains,requested_register,register_uri_base,registry_label, requested_uri, profile_prefs, requested_extension ,clientaccept ): 
-    rule = None # havent found anything yet until we check params
+    rule: RewriteRule = None # havent found anything yet until we check params
     matched_profile = None
     content_type = None
     exception = None
@@ -353,8 +353,23 @@ def match_rule( request, uri, rulechains,requested_register,register_uri_base,re
                 vars.update({ 'uri' : uri ,   'term' : requested_uri , 'path_base' : requested_uri })
         else:
             vars.update({ 'uri' : register_uri_base ,  'term' : '' , 'path_base' : ''   })
-        
-        
+
+        # extract all the service_params variables in rule ancestry - taking the most specific by preference
+        parent = rule.parent
+
+        def addvarsifmissing(vars:dict,varlist:str):
+            if varlist:
+                for varbind in varlist.split(","):
+                    var,value = varbind.split("=")
+                    if not var in vars:
+                        vars[var] = value
+
+        addvarsifmissing(vars, binding.service_params)
+        addvarsifmissing(vars, rule.service_params)
+        while parent :
+            addvarsifmissing(vars, parent.service_params)
+            parent = parent.parent
+
         # Convert the URL template to a resolvable URL - passing context variables, query param values and headers) 
         url = rule.resolve_url_template(requested_uri, url_template, vars, request  )
     
@@ -377,6 +392,7 @@ def collate_alternates(rulechains):
     tokens = { ALTR: 'alt'}
     labels ={ ALTR: getALTR().label}
     descs = {ALTR: getALTR().comment}
+    parents = {}
     for rc in rulechains:
         for rule in rc[1:]: 
             if rule.profile :
@@ -385,7 +401,10 @@ def collate_alternates(rulechains):
                     tokens[prof.uri] = prof.token
                     labels[prof.uri] = prof.label if prof.label else prof.uri
                     descs[prof.uri] = prof.comment
-    return links,tokens,labels,descs
+                    parents[prof.uri] = []
+                    for p in prof.profilesTransitive.all():
+                        parents[prof.uri].append( (p.uri, p.token, p.label) )
+    return links,tokens,labels,descs,parents
 
     
 def makelinkheaders (uri,links,tokens,matched_profile,content_type):

@@ -120,9 +120,9 @@ class RegisterAPIBindingAdmin(admin.ModelAdmin):
     """ Subset of rewrite rules binding APIs to registers """
     save_as = True
     model=RegisterAPIBinding
-    list_display = ('label',  'register', 'parent',)
+    list_display = ('label',  'register', 'parent','pattern')
     list_filter = (APIUsedFilter,)
-    search_fields = ('label', 'pattern','parent')
+    search_fields = list_display
     # disabled because it is disallowing empty field!
     # form = RewriteRuleAdminForm
     fieldsets = [
@@ -133,7 +133,7 @@ class RegisterAPIBindingAdmin(admin.ModelAdmin):
             'fields': ['parent']                 
         }),
         ('Namespace and service binding', {
-            'fields': ['register', 'service_location', 'service_params']                 
+            'fields': ['register', 'pattern', 'service_location', 'service_params']
         })
         
         

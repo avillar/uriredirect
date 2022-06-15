@@ -75,7 +75,7 @@ class RewriteRule(models.Model):
         max_length=500,
         null = True,
         blank = True,
-        help_text='a comma separated list of param/value pairs matching ${variable} strings in redirection templates'
+        help_text='a comma separated list of param=value pairs matching ${variable} strings in redirection templates'
     )
     
     description = models.TextField(
@@ -174,7 +174,10 @@ class RewriteRule(models.Model):
             # else fall through - need to check if parent has a pattern - in which case we dont match!
         if self.pattern:
             if re.match(self.pattern, requested_uri if requested_uri else "" ) != None :
-                return (True, self)
+                if self.register:  # a top level filter match - now nee to check the "parent" - bound API rule
+                    return self.parent.match_inheritance(requested_uri)
+                else:
+                    return (True, self)
             else :
                 # empty subregister pattern cannot match a pattern
                 return (False, None)
